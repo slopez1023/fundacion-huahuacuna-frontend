@@ -112,10 +112,9 @@ export function LoginForm() {
             Contraseña
           </label>
           <Link 
-            href="/recuperar" 
-            className="text-[13px] text-[#FDD835] hover:text-[#FBC02D] font-semibold transition-colors"
-          >
-            ¿Olvidaste?
+          href="/forgot-password" 
+          className="text-[13px] text-[#FDD835] hover:text-[#FBC02D] font-semibold transition-colors"
+          >¿Olvidaste?
           </Link>
         </div>
         <div className="relative">

@@ -54,3 +54,35 @@ export interface IErrorResponse {
   timestamp: string;
   path: string;
 }
+
+// ========================================
+// Interfaces para recuperación de contraseña
+// ========================================
+
+export interface IForgotPasswordRequest {
+  email: string;
+}
+
+export interface IForgotPasswordResponse {
+  success: boolean;
+  message: string;
+  token?: string; // Token temporal (solo en desarrollo)
+  note?: string;
+}
+
+export interface IResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface IResetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface IVerifyTokenResponse {
+  success: boolean;
+  valid: boolean;
+  email?: string;
+  message?: string;
+}

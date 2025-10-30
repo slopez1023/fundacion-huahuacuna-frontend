@@ -23,6 +23,10 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     REGISTER: `${API_BASE_URL}/api/auth/register`,
+    // ⬇️ AGREGAR ESTAS 3 LÍNEAS ⬇️
+    FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
+    VERIFY_TOKEN: (token: string) => `${API_BASE_URL}/api/auth/verify-token/${token}`,
   },
 };
 
@@ -63,8 +67,51 @@ export async function fetchWithTimeout(
   } catch (error) {
     clearTimeout(id);
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('La solicitud tard\u00f3 demasiado tiempo');
+      throw new Error('La solicitud tardó demasiado tiempo');
     }
     throw error;
   }
+}
+
+/**
+ * Utilidad para obtener el token del localStorage
+ */
+export function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('authToken');
+}
+
+/**
+ * Utilidad para guardar el token en localStorage
+ */
+export function setAuthToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('authToken', token);
+}
+
+/**
+ * Utilidad para eliminar el token del localStorage
+ */
+export function removeAuthToken(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('authToken');
+}
+
+/**
+ * Utilidad para hacer fetch con autenticación
+ */
+export async function fetchWithAuth(
+  url: string,
+  options: RequestInit = {},
+  timeout: number = REQUEST_TIMEOUT
+): Promise<Response> {
+  const token = getAuthToken();
+  
+  return fetchWithTimeout(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      ...(token ? { Authorization: token } : {}),
+    },
+  }, timeout);
 }

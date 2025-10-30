@@ -7,6 +7,11 @@ import type {
   ILoginResponse,
   IErrorResponse,
   IUserInfo,
+  IForgotPasswordRequest,
+  IForgotPasswordResponse,
+  IResetPasswordRequest,
+  IResetPasswordResponse,
+  IVerifyTokenResponse,
 } from "../types/auth";
 
 /*
@@ -15,14 +20,16 @@ import type {
   Propósito:
   - Centraliza la lógica de autenticación del frontend: login, register, logout,
     gestión de estado (user, token) y persistencia en sessionStorage.
+  - NUEVO: Recuperación de contraseña (forgotPassword, resetPassword, verifyResetToken)
 
   Responsabilidad:
-  - Exponer una API simple: { user, token, isLoading, error, login, register, logout, clearError }
+  - Exponer una API simple: { user, token, isLoading, error, login, logout, 
+    forgotPassword, resetPassword, verifyResetToken, clearError }
   - Manejar side-effects mínimos (guardar/leer de sessionStorage)
 
   Interacciones:
   - Usa `fetchWithTimeout` y `API_ENDPOINTS` desde `src/lib/api.ts` para comunicarse con el backend.
-  - Consumido por `LoginForm`, `RegisterForm` y `Navbar` para mostrar estado del usuario.
+  - Consumido por `LoginForm`, `RegisterForm`, `ForgotPasswordForm`, `ResetPasswordForm` y `Navbar`.
 
   Notas y buenas prácticas:
   - Mantener este hook ligero: ninguna lógica de UI aquí.
@@ -38,17 +45,20 @@ export function useAuth() {
     }
     return null;
   });
+  
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
       return sessionStorage.getItem("auth_token");
     }
     return null;
   });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-
-
+  /**
+   * Login de usuario
+   */
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
@@ -72,18 +82,27 @@ export function useAuth() {
         throw new Error(errorData.message || "Error en la autenticación");
       }
 
-      const loginResponse = data as ILoginResponse;
+      // El backend devuelve: { success, message, data: { token, userId, email, fullName, role } }
+      if (data.success && data.data) {
+        const { token, userId, email: userEmail, fullName, role } = data.data;
+        
+        // Adaptar al formato que espera el frontend
+        const user: IUserInfo = {
+          id: userId.toString(),
+          email: userEmail,
+          name: fullName,
+          role: role
+        };
 
-      if (loginResponse.success) {
-        setUser(loginResponse.user);
-        setToken(loginResponse.token);
+        setUser(user);
+        setToken(token);
 
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_token", loginResponse.token);
-          sessionStorage.setItem("auth_user", JSON.stringify(loginResponse.user));
+          sessionStorage.setItem("auth_token", token);
+          sessionStorage.setItem("auth_user", JSON.stringify(user));
         }
       } else {
-        throw new Error(loginResponse.message || "Error desconocido");
+        throw new Error(data.message || "Error desconocido");
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error inesperado";
@@ -96,7 +115,9 @@ export function useAuth() {
     }
   }, []);
 
-
+  /**
+   * Logout de usuario
+   */
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
@@ -107,9 +128,157 @@ export function useAuth() {
     }
   }, []);
 
+  /**
+   * Solicitar recuperación de contraseña
+   * @param email - Email del usuario que solicita recuperar contraseña
+   * @returns Token de recuperación (solo en desarrollo, en producción se envía por email)
+   */
+  const forgotPassword = useCallback(async (email: string): Promise<string> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (!email) {
+        throw new Error("Por favor, ingresa tu correo electrónico");
+      }
+
+      const payload: IForgotPasswordRequest = { email };
+
+      const response = await fetchWithTimeout(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Error al solicitar recuperación");
+      }
+
+      const forgotPasswordResponse = data as IForgotPasswordResponse;
+
+      if (!forgotPasswordResponse.success) {
+        throw new Error(forgotPasswordResponse.message || "Error desconocido");
+      }
+
+      // Retornar el token (en desarrollo)
+      return forgotPasswordResponse.token || "";
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Error inesperado";
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Verificar si un token de recuperación es válido
+   * @param resetToken - Token de recuperación a verificar
+   * @returns Objeto con validez del token y email asociado
+   */
+  const verifyResetToken = useCallback(async (resetToken: string): Promise<{ valid: boolean; email?: string }> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (!resetToken) {
+        throw new Error("Token no proporcionado");
+      }
+
+      const response = await fetchWithTimeout(
+        API_ENDPOINTS.AUTH.VERIFY_TOKEN(resetToken),
+        {
+          method: "GET",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error("Error al verificar el token");
+      }
+
+      const verifyResponse = data as IVerifyTokenResponse;
+
+      return {
+        valid: verifyResponse.valid,
+        email: verifyResponse.email,
+      };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Error inesperado";
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Resetear contraseña con token
+   * @param resetToken - Token de recuperación
+   * @param newPassword - Nueva contraseña
+   */
+  const resetPassword = useCallback(async (resetToken: string, newPassword: string): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (!resetToken || !newPassword) {
+        throw new Error("Token y contraseña son requeridos");
+      }
+
+      if (newPassword.length < 6) {
+        throw new Error("La contraseña debe tener al menos 6 caracteres");
+      }
+
+      const payload: IResetPasswordRequest = {
+        token: resetToken,
+        newPassword,
+      };
+
+      const response = await fetchWithTimeout(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Error al resetear contraseña");
+      }
+
+      const resetResponse = data as IResetPasswordResponse;
+
+      if (!resetResponse.success) {
+        throw new Error(resetResponse.message || "Error desconocido");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Error inesperado";
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Limpiar error
+   */
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  return { user, token, isLoading, error, login, logout, clearError };
+  return { 
+    user, 
+    token, 
+    isLoading, 
+    error, 
+    login, 
+    logout, 
+    forgotPassword,
+    verifyResetToken,
+    resetPassword,
+    clearError 
+  };
 }
