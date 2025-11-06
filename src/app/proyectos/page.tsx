@@ -57,12 +57,12 @@ export default function ProjectsPage() {
     {
       title: "Actividades Recreativas",
       description: "Esparcimiento y desarrollo de habilidades sociales a través del juego.",
-      image: "/activities/recreation.jpg"
+      image: "/activities/Actividad.jpg"
     },
     {
       title: "Talleres Creativos",
       description: "Desarrollo de habilidades artísticas y expresión personal.",
-      image: "/activities/creative-workshops.jpg"
+      image: "/activities/TallerCreativo.jpg"
     }
   ];
 

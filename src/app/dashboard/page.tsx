@@ -48,12 +48,12 @@ export default function DashboardPage() {
           {/* Hero right (image card) */}
           <div className="flex justify-center lg:justify-end">
             <div className="relative w-full max-w-sm">
-              <Image src="/hero-children.jpg" alt="Niños" width={420} height={300} className="rounded-xl shadow-lg object-cover w-full h-auto" />
+              <Image src="/Home.jpg" alt="Niños" width={420} height={300} className="rounded-xl shadow-lg object-cover w-full h-auto" />
               <div className="absolute bottom-4 left-4 bg-white rounded-lg p-3 shadow-md flex items-center gap-3">
                 <Image src="/logo.png" alt="logo" width={36} height={36} className="rounded-full" />
                 <div>
-                  <p className="text-sm font-semibold text-[#1E3A5F]">RD</p>
-                  <p className="text-xs text-gray-500">Niño apadrinado</p>
+                  <p className="text-sm font-semibold text-[#1E3A5F]">Fundación</p>
+                  <p className="text-xs text-gray-500">Huahuacuna</p>
                 </div>
               </div>
             </div>
@@ -137,7 +137,7 @@ export default function DashboardPage() {
             </div>
             <div className="relative">
               <Image 
-                src="/program-activities.jpg" 
+                src="/Historia.jpg" 
                 alt="Actividades del programa" 
                 width={500} 
                 height={400} 

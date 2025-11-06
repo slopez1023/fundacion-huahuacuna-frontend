@@ -64,7 +64,7 @@ export default function VoluntariadoPage() {
             </div>
             <div className="relative h-[400px] rounded-xl overflow-hidden shadow-lg">
               <Image
-                src="/volunteer-hero.jpg"
+                src="/Voluntariado.jpg"
                 alt="Voluntarios en acción"
                 fill
                 className="object-cover"
