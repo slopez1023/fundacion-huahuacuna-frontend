@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/src/components/ui/Navbar";
+import Navbar from "@/components/ui/Navbar";
 
 /*
   DashboardPage

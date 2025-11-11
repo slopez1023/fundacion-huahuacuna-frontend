@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import Navbar from "@/src/components/ui/Navbar";
-import Breadcrumb from "@/src/components/ui/Breadcrumb";
+import Navbar from "@/components/ui/Navbar";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 import { CheckIcon, EnvelopeIcon, PhoneIcon, MapPinIcon } from "@heroicons/react/24/outline";
 
 export default function DonacionesPage() {

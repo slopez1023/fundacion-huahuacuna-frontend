@@ -1,17 +1,18 @@
 
+// 1. ARREGLO: Importar Metadata de 'next'
 import type { Metadata } from "next";
+
+// (Aquí van tus imports de Poppins)
 import "./globals.css";
-import "@fontsource/poppins/400.css"; // <-- TU CÓDIGO (se queda)
-import "@fontsource/poppins/500.css"; // <-- TU CÓDIGO (se queda)
-import "@fontsource/poppins/600.css"; // <-- TU CÓDIGO (se queda)
-import "@fontsource/poppins/700.css"; // <-- TU CÓDIGO (se queda)
+import "@fontsource/poppins/400.css";
+import "@fontsource/poppins/500.css";
+import "@fontsource/poppins/600.css";
+import "@fontsource/poppins/700.css";
 
-// 1. AÑADIR ESTA LÍNEA
-import { AuthProvider } from "@/context/AuthContext";
-
+// 2. ARREGLO: Restaurar el contenido del objeto
 export const metadata: Metadata = {
-  title: "Fundación Huahuacuna", // <-- TU CÓDIGO (se queda)
-  description: "Conectando corazones, transformando vidas", // <-- TU CÓDIGO (se queda)
+  title: "Fundación Huahuacuna",
+  description: "Conectando corazones, transformando vidas",
 };
 
 export default function RootLayout({
@@ -21,13 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      {/* 2. MANTENER TU CLASSNAME */}
-      <body className="font-['Poppins'] antialiased">
-        {/* 3. ENVOLVER {children} CON EL PROVIDER */}
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </body>
+      <body className="font-['Poppins'] antialiased">{children}</body>
     </html>
   );
 }

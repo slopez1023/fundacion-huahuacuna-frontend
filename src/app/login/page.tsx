@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { LoginForm } from "@/src/components/auth/LoginForm";
+import { LoginForm } from "@/components/auth/LoginForm";
 
 /*
   LoginPage (src/app/login/page.tsx)

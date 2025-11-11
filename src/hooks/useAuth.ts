@@ -1,12 +1,13 @@
+
 "use client";
 
-import { useState, useCallback } from "react";
-import { API_ENDPOINTS, fetchWithTimeout } from "../lib/api";
+import { useState, useCallback, useEffect } from "react";
+// 1. ¡IMPORTANTE! Importamos el authService de apiService.ts
+import { authService } from "@/lib/apiService"; 
+// 2. Importamos los tipos que tu hook necesita (IUserInfo, etc.)
+import type { IUserInfo, IErrorResponse } from "../types/auth"; 
+// 3. (Importamos los tipos de password reset, aunque aún no los usaremos)
 import type {
-  ILoginRequest,
-  ILoginResponse,
-  IErrorResponse,
-  IUserInfo,
   IForgotPasswordRequest,
   IForgotPasswordResponse,
   IResetPasswordRequest,
@@ -14,33 +15,23 @@ import type {
   IVerifyTokenResponse,
 } from "../types/auth";
 
-/*
-  useAuth - Hook de autenticación
-
-  Propósito:
-  - Centraliza la lógica de autenticación del frontend: login, register, logout,
-    gestión de estado (user, token) y persistencia en sessionStorage.
-  - NUEVO: Recuperación de contraseña (forgotPassword, resetPassword, verifyResetToken)
-
-  Responsabilidad:
-  - Exponer una API simple: { user, token, isLoading, error, login, logout, 
-    forgotPassword, resetPassword, verifyResetToken, clearError }
-  - Manejar side-effects mínimos (guardar/leer de sessionStorage)
-
-  Interacciones:
-  - Usa `fetchWithTimeout` y `API_ENDPOINTS` desde `src/lib/api.ts` para comunicarse con el backend.
-  - Consumido por `LoginForm`, `RegisterForm`, `ForgotPasswordForm`, `ResetPasswordForm` y `Navbar`.
-
-  Notas y buenas prácticas:
-  - Mantener este hook ligero: ninguna lógica de UI aquí.
-  - En producción considerar tokens en cookies httpOnly y refresh tokens en lugar de sessionStorage.
-  - Es una buena candidata a pruebas unitarias (mockear la capa fetch).
-*/
+// Definimos la respuesta de nuestro backend de Spring
+interface SpringAuthResponse {
+  accessToken: string;
+  usuario: {
+    id: number;
+    email: string;
+    nombre: string;
+    roles: string[];
+  };
+}
 
 export function useAuth() {
+  // 3. CAMBIAMOS A LOCALSTORAGE
+  // (para que el interceptor de apiService.ts pueda leer el token)
   const [user, setUser] = useState<IUserInfo | null>(() => {
     if (typeof window !== "undefined") {
-      const savedUser = sessionStorage.getItem("auth_user");
+      const savedUser = localStorage.getItem("auth_user");
       return savedUser ? JSON.parse(savedUser) : null;
     }
     return null;
@@ -48,7 +39,7 @@ export function useAuth() {
   
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
-      return sessionStorage.getItem("auth_token");
+      return localStorage.getItem("auth_token");
     }
     return null;
   });
@@ -57,7 +48,7 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Login de usuario
+   * Login de usuario (MODIFICADO)
    */
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
@@ -68,197 +59,64 @@ export function useAuth() {
         throw new Error("Por favor, completa todos los campos");
       }
 
-      const payload: ILoginRequest = { email, password };
+      // 4. ¡EL GRAN CAMBIO!
+      // Llamamos a nuestro 'authService' (axios) en lugar de 'fetchWithTimeout'
+      const response = await authService.login(email, password);
+      
+      // 'response.data' ya es el JSON. Axios lo maneja automáticamente.
+      const data = response.data as SpringAuthResponse;
 
-      const response = await fetchWithTimeout(API_ENDPOINTS.AUTH.LOGIN, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      // 5. Adaptamos la respuesta de Spring a la que tu hook espera
+      const { accessToken, usuario } = data;
+      
+      // El rol principal (tu hook espera UN solo rol)
+      const userRole = usuario.roles.includes("ROLE_ADMIN") ? "ADMIN" : "USER";
 
-      const data = await response.json();
+      const user: IUserInfo = {
+        id: usuario.id.toString(),
+        email: usuario.email,
+        name: usuario.nombre,
+        role: userRole 
+      };
 
-      if (!response.ok) {
-        const errorData = data as IErrorResponse;
-        throw new Error(errorData.message || "Error en la autenticación");
+      setUser(user);
+      setToken(accessToken);
+
+      // 6. Guardamos en LOCALSTORAGE
+      if (typeof window !== "undefined") {
+        localStorage.setItem("auth_token", accessToken);
+        localStorage.setItem("auth_user", JSON.stringify(user));
       }
 
-      // El backend devuelve: { success, message, data: { token, userId, email, fullName, role } }
-      if (data.success && data.data) {
-        const { token, userId, email: userEmail, fullName, role } = data.data;
-        
-        // Adaptar al formato que espera el frontend
-        const user: IUserInfo = {
-          id: userId.toString(),
-          email: userEmail,
-          name: fullName,
-          role: role
-        };
-
-        setUser(user);
-        setToken(token);
-
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_token", token);
-          sessionStorage.setItem("auth_user", JSON.stringify(user));
-        }
-      } else {
-        throw new Error(data.message || "Error desconocido");
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error inesperado";
+    } catch (err: any) {
+      // Axios envuelve los errores en 'err.response'
+      const errorData = err.response?.data as IErrorResponse;
+      const errorMessage = errorData?.message || (err instanceof Error ? err.message : "Error inesperado");
+      
       setError(errorMessage);
       setUser(null);
       setToken(null);
-      throw err;
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
+      }
+      throw new Error(errorMessage); // Lanzamos el error para que LoginForm lo atrape
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   /**
-   * Logout de usuario
+   * Logout de usuario (MODIFICADO)
    */
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
     setError(null);
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("auth_token");
-      sessionStorage.removeItem("auth_user");
-    }
-  }, []);
-
-  /**
-   * Solicitar recuperación de contraseña
-   * @param email - Email del usuario que solicita recuperar contraseña
-   * @returns Token de recuperación (solo en desarrollo, en producción se envía por email)
-   */
-  const forgotPassword = useCallback(async (email: string): Promise<string> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      if (!email) {
-        throw new Error("Por favor, ingresa tu correo electrónico");
-      }
-
-      const payload: IForgotPasswordRequest = { email };
-
-      const response = await fetchWithTimeout(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Error al solicitar recuperación");
-      }
-
-      const forgotPasswordResponse = data as IForgotPasswordResponse;
-
-      if (!forgotPasswordResponse.success) {
-        throw new Error(forgotPasswordResponse.message || "Error desconocido");
-      }
-
-      // Retornar el token (en desarrollo)
-      return forgotPasswordResponse.token || "";
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error inesperado";
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  /**
-   * Verificar si un token de recuperación es válido
-   * @param resetToken - Token de recuperación a verificar
-   * @returns Objeto con validez del token y email asociado
-   */
-  const verifyResetToken = useCallback(async (resetToken: string): Promise<{ valid: boolean; email?: string }> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      if (!resetToken) {
-        throw new Error("Token no proporcionado");
-      }
-
-      const response = await fetchWithTimeout(
-        API_ENDPOINTS.AUTH.VERIFY_TOKEN(resetToken),
-        {
-          method: "GET",
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error("Error al verificar el token");
-      }
-
-      const verifyResponse = data as IVerifyTokenResponse;
-
-      return {
-        valid: verifyResponse.valid,
-        email: verifyResponse.email,
-      };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error inesperado";
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  /**
-   * Resetear contraseña con token
-   * @param resetToken - Token de recuperación
-   * @param newPassword - Nueva contraseña
-   */
-  const resetPassword = useCallback(async (resetToken: string, newPassword: string): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      if (!resetToken || !newPassword) {
-        throw new Error("Token y contraseña son requeridos");
-      }
-
-      if (newPassword.length < 6) {
-        throw new Error("La contraseña debe tener al menos 6 caracteres");
-      }
-
-      const payload: IResetPasswordRequest = {
-        token: resetToken,
-        newPassword,
-      };
-
-      const response = await fetchWithTimeout(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Error al resetear contraseña");
-      }
-
-      const resetResponse = data as IResetPasswordResponse;
-
-      if (!resetResponse.success) {
-        throw new Error(resetResponse.message || "Error desconocido");
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error inesperado";
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setIsLoading(false);
+      // 7. Limpiamos LOCALSTORAGE
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
     }
   }, []);
 
@@ -269,6 +127,28 @@ export function useAuth() {
     setError(null);
   }, []);
 
+
+  // --- ¡PENDIENTE! ---
+  // Las siguientes funciones (forgotPassword, etc.) NO funcionarán
+  // porque no hemos creado esos endpoints en el backend de Spring Boot.
+  // Las dejamos aquí para no romper tu código, pero lanzarán un error.
+  
+  const forgotPassword = useCallback(async (email: string): Promise<string> => {
+    setError("Función no implementada en el backend.");
+    throw new Error("Función no implementada en el backend.");
+  }, []);
+
+  const verifyResetToken = useCallback(async (resetToken: string): Promise<{ valid: boolean; email?: string }> => {
+    setError("Función no implementada en el backend.");
+    throw new Error("Función no implementada en el backend.");
+  }, []);
+
+  const resetPassword = useCallback(async (resetToken: string, newPassword: string): Promise<void> => {
+    setError("Función no implementada en el backend.");
+    throw new Error("Función no implementada en el backend.");
+  }, []);
+
+
   return { 
     user, 
     token, 
@@ -276,9 +156,9 @@ export function useAuth() {
     error, 
     login, 
     logout, 
-    forgotPassword,
-    verifyResetToken,
-    resetPassword,
+    forgotPassword, // Sigue aquí, pero no funcionará
+    verifyResetToken, // Sigue aquí, pero no funcionará
+    resetPassword, // Sigue aquí, pero no funcionará
     clearError 
   };
 }
