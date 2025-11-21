@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/src/hooks/useAuth";
-import { useNotifications } from "@/src/hooks/useNotifications"; // ✅ NUEVO
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Navbar

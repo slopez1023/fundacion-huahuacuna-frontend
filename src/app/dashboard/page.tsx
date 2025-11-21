@@ -8,18 +8,9 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Navbar from '@/src/components/ui/Navbar';
-import Breadcrumb from '@/src/components/ui/Breadcrumb';
-import ProtectedRoute from '@/src/components/admin/ProtectedRoute';
-import StatCard from '@/src/components/admin/StatCard';
-import ApplicationCard from '@/src/components/admin/ApplicationCard';
-import ApplicationModal from '@/src/components/admin/ApplicationModal';
-import { useApplications } from '@/src/hooks/useApplications';
-import { useNotifications } from '@/src/hooks/useNotifications';
-import { useAuth } from '@/src/hooks/useAuth';
-import type { ApplicationResponse, ApplicationStatus, ApplicationType } from '@/src/types/application';
+import Image from "next/image";
+import Link from "next/link";
+import Navbar from "@/components/ui/Navbar";
 
 export default function DashboardPage() {
   const router = useRouter();

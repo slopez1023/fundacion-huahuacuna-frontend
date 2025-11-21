@@ -1,9 +1,11 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
 import "@fontsource/poppins/400.css";
 import "@fontsource/poppins/500.css";
 import "@fontsource/poppins/600.css";
 import "@fontsource/poppins/700.css";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "Fundación Huahuacuna",
@@ -17,7 +19,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className="font-['Poppins'] antialiased">{children}</body>
+      <body className="font-['Poppins'] antialiased">
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }
