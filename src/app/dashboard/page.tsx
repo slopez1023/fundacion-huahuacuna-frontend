@@ -8,9 +8,18 @@
 
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/ui/Navbar";
+import Breadcrumb from "@/components/ui/Breadcrumb";
+import { useAuth } from "@/hooks/useAuth";
+import { useApplications } from "@/hooks/useApplications";
+import { useNotifications } from "@/hooks/useNotifications";
+import StatCard from "@/components/admin/StatCard";
+import ApplicationCard from "@/components/admin/ApplicationCard";
+import ApplicationModal from "@/components/admin/ApplicationModal";
+import ProtectedRoute from "@/components/admin/ProtectedRoute";
+import type { ApplicationResponse, ApplicationType, ApplicationStatus } from "@/types/application";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -29,10 +38,10 @@ export default function DashboardPage() {
     clearError
   } = useApplications({ autoFetch: true });
 
-const {
-  unreadCount,
-  fetchUnreadCount
-} = useNotifications({ pollInterval: 30000 });
+  const {
+    unreadCount,
+    fetchUnreadCount
+  } = useNotifications({ pollInterval: 30000 });
 
   // Estado local
   const [selectedApplication, setSelectedApplication] = useState<ApplicationResponse | null>(null);
@@ -48,7 +57,7 @@ const {
   }, [fetchApplications, fetchUnreadCount]);
 
   // Filtrar aplicaciones
-  const filteredApplications = applications.filter(app => {
+  const filteredApplications = applications.filter((app: ApplicationResponse) => {
     const matchesType = filterType === 'ALL' || app.type === filterType;
     const matchesStatus = filterStatus === 'ALL' || app.status === filterStatus;
     const matchesSearch = searchTerm === '' || 
@@ -315,7 +324,7 @@ const {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredApplications.map((application) => (
+                {filteredApplications.map((application: ApplicationResponse) => (
                   <ApplicationCard
                     key={application.id}
                     application={application}

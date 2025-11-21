@@ -7,7 +7,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { User, CreateUserDTO, UpdateUserDTO } from '@/src/types/user';
+import type { User, CreateUserDTO, UpdateUserDTO } from '@/types/user';
 
 interface UserModalProps {
   isOpen: boolean;

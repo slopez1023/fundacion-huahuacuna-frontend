@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/src/components/ui/Navbar";
-import Breadcrumb from "@/src/components/ui/Breadcrumb";
-import Footer from "@/src/components/ui/Footer";
+import Navbar from "@/components/ui/Navbar";
+import Breadcrumb from "@/components/ui/Breadcrumb";
+import Footer from "@/components/ui/Footer";
 
 export default function ImpactoPage() {
   const impactStats = [

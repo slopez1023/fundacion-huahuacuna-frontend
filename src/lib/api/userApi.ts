@@ -4,8 +4,8 @@
  * @version 1.0
  */
 
-import { User, CreateUserDTO, UpdateUserDTO, UserApiResponse } from '@/src/types/user';
-import { API_ENDPOINTS, fetchWithAuth } from '@/src/lib/api';
+import { User, CreateUserDTO, UpdateUserDTO, UserApiResponse } from '@/types/user';
+import { API_ENDPOINTS, fetchWithAuth } from '@/lib/api';
 
 /**
  * Manejo de errores

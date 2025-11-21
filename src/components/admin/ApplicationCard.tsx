@@ -8,7 +8,7 @@
 
 "use client";
 
-import { ApplicationResponse, ApplicationStatus, ApplicationType } from '@/src/types/application';
+import { ApplicationResponse, ApplicationStatus, ApplicationType } from '@/types/application';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 

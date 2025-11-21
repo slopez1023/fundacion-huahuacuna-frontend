@@ -8,12 +8,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/src/components/ui/Navbar';
-import Breadcrumb from '@/src/components/ui/Breadcrumb';
-import ProtectedRoute from '@/src/components/admin/ProtectedRoute';
-import { useNotifications } from '@/src/hooks/useNotifications';
-import { Notification } from '@/src/lib/api/notificationApi';
-import { useAuth } from '@/src/hooks/useAuth';
+import Navbar from '@/components/ui/Navbar';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import ProtectedRoute from '@/components/admin/ProtectedRoute';
+import { useNotifications } from '@/hooks/useNotifications';
+import { Notification } from '@/lib/api/notificationApi';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function NotificationsPage() {
   const router = useRouter();

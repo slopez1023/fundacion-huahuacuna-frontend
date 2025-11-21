@@ -10,15 +10,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/src/components/ui/Navbar';
-import Breadcrumb from '@/src/components/ui/Breadcrumb';
-import ProtectedRoute from '@/src/components/admin/ProtectedRoute';
-import UserModal from '@/src/components/admin/UserModal';
-import UsersTable from '@/src/components/admin/UsersTable';
-import DeleteConfirmModal from '@/src/components/admin/DeleteConfirmModal';
-import { useUsers } from '@/src/hooks/useUsers';
-import { useAuth } from '@/src/hooks/useAuth';
-import type { User, CreateUserDTO, UpdateUserDTO, UserRole } from '@/src/types/user';
+import Navbar from '@/components/ui/Navbar';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import ProtectedRoute from '@/components/admin/ProtectedRoute';
+import UserModal from '@/components/admin/UserModal';
+import UsersTable from '@/components/admin/UsersTable';
+import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
+import { useUsers } from '@/hooks/useUsers';
+import { useAuth } from '@/hooks/useAuth';
+import type { User, CreateUserDTO, UpdateUserDTO, UserRole } from '@/types/user';
 
 export default function UsersManagementPage() {
   const router = useRouter();

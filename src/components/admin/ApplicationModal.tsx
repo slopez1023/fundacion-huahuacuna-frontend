@@ -9,7 +9,7 @@
 "use client";
 
 import { useState } from 'react';
-import { ApplicationResponse, ApplicationStatus, ApplicationType } from '@/src/types/application';
+import { ApplicationResponse, ApplicationStatus, ApplicationType } from '@/types/application';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 

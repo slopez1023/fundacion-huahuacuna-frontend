@@ -1,4 +1,4 @@
-import { Donation } from '@/src/types/donation';
+import { Donation } from '@/types/donation';
 import fs from 'fs/promises';
 import path from 'path';
 

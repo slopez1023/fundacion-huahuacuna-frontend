@@ -23,7 +23,6 @@ async function sendCertificatesJob() {
 export function initializeCertificateCronJob() {
   // Ejecutar el 1 de enero a las 9:00 AM
   cron.schedule('0 9 1 1 *', sendCertificatesJob, {
-    scheduled: true,
     timezone: 'America/Bogota' // Zona horaria de Colombia
   });
   
@@ -36,7 +35,6 @@ export function initializeCertificateCronJob() {
 // Para desarrollo y pruebas: ejecutar cada minuto
 export function initializeCertificateCronJobDev() {
   cron.schedule('* * * * *', sendCertificatesJob, {
-    scheduled: true,
     timezone: 'America/Bogota'
   });
   

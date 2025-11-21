@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/src/components/ui/Navbar";
-import Footer from "@/src/components/ui/Footer";
-import MapSection from "@/src/components/ui/MapSection";
+import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/ui/Footer";
+import MapSection from "@/components/ui/MapSection";
 
 export default function DashboardPage() {
   return (

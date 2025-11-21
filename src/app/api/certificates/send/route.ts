@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getDonationsForCertificates, updateDonation } from '@/src/lib/donationStorage';
-import { sendDonationCertificate } from '@/src/lib/emailService';
-import { generateCertificateNumber } from '@/src/lib/certificateGenerator';
+import { getDonationsForCertificates, updateDonation } from '@/lib/donationStorage';
+import { sendDonationCertificate } from '@/lib/emailService';
+import { generateCertificateNumber } from '@/lib/certificateGenerator';
+import { Donation } from '@/types/donation';
 
 export async function POST() {
   try {
@@ -80,7 +81,7 @@ export async function GET() {
     
     return NextResponse.json({
       pendingCertificates: donations.length,
-      donations: donations.map(d => ({
+      donations: donations.map((d: Donation) => ({
         id: d.id,
         donorName: d.donorName,
         donorEmail: d.donorEmail,

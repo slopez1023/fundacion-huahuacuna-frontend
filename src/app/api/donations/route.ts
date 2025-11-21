@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveDonation } from '@/src/lib/donationStorage';
-import { Donation } from '@/src/types/donation';
-import { generateCertificateNumber } from '@/src/lib/certificateGenerator';
+import { saveDonation } from '@/lib/donationStorage';
+import { Donation } from '@/types/donation';
+import { generateCertificateNumber } from '@/lib/certificateGenerator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,8 +45,39 @@ export async function POST(request: NextRequest) {
       certificateSent: false,
     };
     
-    // Guardar la donación
+    // Guardar la donación localmente
     await saveDonation(donation);
+    
+    // Enviar la donación al backend para crear la notificación
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+      const backendResponse = await fetch(`${backendUrl}/donations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: donation.donorName,
+          email: donation.donorEmail,
+          phone: donation.donorPhone,
+          amount: donation.amount,
+          donationType: donation.donationType,
+          description: donation.inKindDescription,
+          itemType: donation.inKindType,
+          donationDate: donation.donationDate.toISOString(),
+          certificateNumber: generateCertificateNumber(donationDate),
+        }),
+      });
+
+      if (!backendResponse.ok) {
+        console.warn('No se pudo registrar la donación en el backend:', await backendResponse.text());
+      } else {
+        console.log('Donación registrada en el backend exitosamente');
+      }
+    } catch (backendError) {
+      console.error('Error al comunicarse con el backend:', backendError);
+      // Continuamos aunque falle el backend
+    }
     
     // Enviar confirmación por email (sin certificado)
     // El certificado se enviará el 1 de enero del año siguiente

@@ -4,7 +4,7 @@
  * @version 1.0
  */
 
-import { API_ENDPOINTS, fetchWithAuth } from '@/src/lib/api';
+import { API_ENDPOINTS, fetchWithAuth } from '@/lib/api';
 
 export interface Notification {
   id: number;

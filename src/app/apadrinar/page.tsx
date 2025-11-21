@@ -12,11 +12,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/src/components/ui/Navbar";
-import Breadcrumb from "@/src/components/ui/Breadcrumb";
-import { createSponsorApplication } from '@/src/lib/api/applicationApi';
-import type { SponsorApplicationDTO } from '@/src/types/application';
-import Footer from "@/src/components/ui/Footer";
+import Navbar from "@/components/ui/Navbar";
+import Breadcrumb from "@/components/ui/Breadcrumb";
+import { createSponsorApplication } from '@/lib/api/applicationApi';
+import type { SponsorApplicationDTO } from '@/types/application';
+import Footer from "@/components/ui/Footer";
 
 
 export default function ApadrinarPage() {
@@ -108,7 +108,7 @@ export default function ApadrinarPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev: SponsorApplicationDTO) => ({ ...prev, [name]: value }));
   };
 
   /**

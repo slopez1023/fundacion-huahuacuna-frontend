@@ -14,8 +14,8 @@ import {
   ApplicationType,
   UpdateApplicationStatusDTO,
   ApiResponse
-} from '@/src/types/application';
-import { API_ENDPOINTS, fetchWithAuth, fetchWithTimeout } from '@/src/lib/api';
+} from '@/types/application';
+import { API_ENDPOINTS, fetchWithAuth, fetchWithTimeout } from '@/lib/api';
 
 /**
  * Manejo centralizado de errores de API

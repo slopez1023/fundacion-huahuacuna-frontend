@@ -15,7 +15,7 @@ import {
   markAllAsRead,
   deleteNotification,
   Notification
-} from '@/src/lib/api/notificationApi';
+} from '@/lib/api/notificationApi';
 
 interface UseNotificationsOptions {
   autoFetch?: boolean;

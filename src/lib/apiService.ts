@@ -1,12 +1,12 @@
 
 import axios from "axios";
-import { 
+import type { 
   ICrearNinoRequest, 
   INinoResponse, 
   IActualizarNinoRequest,
   ICambiarEstadoRequest,
   EstadoNino
-} from "../types/apadrinamiento.types"; // Ajustar la ruta de ser necesario necesario
+} from "@/types/apadrinamiento";
 
 // URL base de API de Spring Boot
 const API_BASE_URL = "http://localhost:8080/api";

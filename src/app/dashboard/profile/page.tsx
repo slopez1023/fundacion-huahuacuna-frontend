@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/src/components/ui/Navbar";
-import Footer from "@/src/components/ui/Footer";
-import { useAuth } from "@/src/hooks/useAuth";
+import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/ui/Footer";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * ProfilePage

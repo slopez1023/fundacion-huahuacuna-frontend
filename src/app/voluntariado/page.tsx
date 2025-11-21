@@ -12,11 +12,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/src/components/ui/Navbar";
-import Breadcrumb from "@/src/components/ui/Breadcrumb";
-import { createVolunteerApplication } from '@/src/lib/api/applicationApi';
-import type { VolunteerApplicationDTO } from '@/src/types/application';
-import Footer from "@/src/components/ui/Footer";
+import Navbar from "@/components/ui/Navbar";
+import Breadcrumb from "@/components/ui/Breadcrumb";
+import { createVolunteerApplication } from '@/lib/api/applicationApi';
+import type { VolunteerApplicationDTO } from '@/types/application';
+import Footer from "@/components/ui/Footer";
 
 
 export default function VoluntariadoPage() {
@@ -93,9 +93,9 @@ export default function VoluntariadoPage() {
     
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
-      setFormData(prev => ({ ...prev, [name]: checked }));
+      setFormData((prev: VolunteerApplicationDTO) => ({ ...prev, [name]: checked }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev: VolunteerApplicationDTO) => ({ ...prev, [name]: value }));
     }
   };
 

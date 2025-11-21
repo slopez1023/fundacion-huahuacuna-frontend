@@ -16,8 +16,8 @@ import {
   resetUserPassword,
   searchUsers,
   getUsersByRole
-} from '@/src/lib/api/userApi';
-import type { User, CreateUserDTO, UpdateUserDTO, UserRole } from '@/src/types/user';
+} from '@/lib/api/userApi';
+import type { User, CreateUserDTO, UpdateUserDTO, UserRole } from '@/types/user';
 
 interface UseUsersOptions {
   autoFetch?: boolean;

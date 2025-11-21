@@ -13,14 +13,14 @@ import {
   approveApplication,
   rejectApplication,
   deleteApplication
-} from '@/src/lib/api/applicationApi';
+} from '@/lib/api/applicationApi';
 import type {
   ApplicationResponse,
   ApplicationType,
   ApplicationStatus,
   ApplicationStatistics,
   UpdateApplicationStatusDTO
-} from '@/src/types/application';
+} from '@/types/application';
 
 interface UseApplicationsOptions {
   autoFetch?: boolean;

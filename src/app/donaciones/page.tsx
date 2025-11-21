@@ -7,8 +7,8 @@
 "use client";
 
 import { useState } from 'react';
-import Navbar from '@/src/components/ui/Navbar';
-import Footer from '@/src/components/ui/Footer';
+import Navbar from '@/components/ui/Navbar';
+import Footer from '@/components/ui/Footer';
 
 export default function DonacionesPage() {
   const [activeTab, setActiveTab] = useState<'monetary' | 'in-kind'>('monetary');

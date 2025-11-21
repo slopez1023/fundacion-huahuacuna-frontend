@@ -23,11 +23,12 @@ export default function Navbar() {
   const router = useRouter();
   const { user, logout } = useAuth();
   
-  // ✅ Hook de notificaciones (solo para admins)
-  const { unreadCount, fetchUnreadCount } = useNotifications({
-    autoFetch: false, // No cargar automáticamente
-    pollInterval: user?.role === "ADMIN" ? 30000 : 0 // Actualizar cada 30s solo para admins
-  });
+  // ✅ Hook de notificaciones (solo para admins) - Temporalmente deshabilitado
+  // const { unreadCount, fetchUnreadCount } = useNotifications({
+  //   autoFetch: false, // No cargar automáticamente
+  //   pollInterval: user?.role === "ADMIN" ? 30000 : 0 // Actualizar cada 30s solo para admins
+  // });
+  const unreadCount = 0; // Valor por defecto
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -38,12 +39,12 @@ export default function Navbar() {
     setIsMounted(true);
   }, []);
 
-  // ✅ Cargar contador de notificaciones si es admin
-  useEffect(() => {
-    if (isMounted && user?.role === "ADMIN") {
-      fetchUnreadCount();
-    }
-  }, [isMounted, user, fetchUnreadCount]);
+  // ✅ Cargar contador de notificaciones si es admin - Temporalmente deshabilitado
+  // useEffect(() => {
+  //   if (isMounted && user?.role === "ADMIN") {
+  //     fetchUnreadCount();
+  //   }
+  // }, [isMounted, user, fetchUnreadCount]);
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
