@@ -5,28 +5,66 @@
 
   Propósito:
   - Centralizar la configuración de la comunicación con el backend (URL base y endpoints)
-  - Proveer una utilidad `fetchWithTimeout` para llamadas HTTP con timeout y headers por defecto.
+  - Proveer utilidades para llamadas HTTP con manejo de autenticación y errores.
+  - Manejar automáticamente tokens expirados y redireccionar al login.
 
   Uso:
   - Importar `API_ENDPOINTS` para obtener las rutas del backend.
-  - Usar `fetchWithTimeout` para realizar llamadas que necesiten un timeout y manejo de errores por tiempo.
+  - Usar `fetchWithAuth` para realizar llamadas autenticadas.
 
   Notas:
   - La variable `NEXT_PUBLIC_API_URL` permite apuntar a diferentes servidores sin tocar el código.
-  - `fetchWithTimeout` usa AbortController; lanza un error claro cuando la petición se agota.
+  - `fetchWithAuth` maneja automáticamente tokens expirados (401/403).
 */
 
 export const API_BASE_URL = 
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: `${API_BASE_URL}/api/auth/login`,
-    REGISTER: `${API_BASE_URL}/api/auth/register`,
-    // ⬇️ AGREGAR ESTAS 3 LÍNEAS ⬇️
-    FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
-    RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
-    VERIFY_TOKEN: (token: string) => `${API_BASE_URL}/api/auth/verify-token/${token}`,
+    LOGIN: `${API_BASE_URL}/auth/login`,
+    REGISTER: `${API_BASE_URL}/auth/register`,
+    FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
+    VERIFY_TOKEN: (token: string) => `${API_BASE_URL}/auth/verify-token/${token}`,
+  },
+  USERS: {
+    BASE: `${API_BASE_URL}/users`,
+    BY_ID: (id: number) => `${API_BASE_URL}/users/${id}`,
+    TOGGLE_STATUS: (id: number) => `${API_BASE_URL}/users/${id}/toggle-status`,
+    RESET_PASSWORD: (id: number) => `${API_BASE_URL}/users/${id}/reset-password`,
+    SEARCH: (term: string) => `${API_BASE_URL}/users/search?q=${encodeURIComponent(term)}`,
+    BY_ROLE: (role: string) => `${API_BASE_URL}/users/role/${role}`,
+  },
+  APPLICATIONS: {
+    BASE: `${API_BASE_URL}/applications`,
+    BY_ID: (id: number) => `${API_BASE_URL}/applications/${id}`,
+    BY_TYPE: (type: string) => `${API_BASE_URL}/applications/type/${type}`,
+    BY_STATUS: (status: string) => `${API_BASE_URL}/applications/status/${status}`,
+    PENDING: `${API_BASE_URL}/applications/pending`,
+    RECENT: `${API_BASE_URL}/applications/recent`,
+    STATISTICS: `${API_BASE_URL}/applications/statistics`,
+    VOLUNTEER: `${API_BASE_URL}/applications/volunteer`,
+    SPONSOR: `${API_BASE_URL}/applications/sponsor`,
+    SEARCH: (name: string) => `${API_BASE_URL}/applications/search?name=${encodeURIComponent(name)}`,
+    UPDATE_STATUS: (id: number) => `${API_BASE_URL}/applications/${id}/status`,
+    APPROVE: (id: number) => `${API_BASE_URL}/applications/${id}/approve`,
+    REJECT: (id: number) => `${API_BASE_URL}/applications/${id}/reject`,
+  },
+  NOTIFICATIONS: {
+    BASE: `${API_BASE_URL}/notifications`,
+    BY_ID: (id: number) => `${API_BASE_URL}/notifications/${id}`,
+    UNREAD: `${API_BASE_URL}/notifications/unread`,
+    UNREAD_COUNT: `${API_BASE_URL}/notifications/unread/count`,
+    MARK_AS_READ: (id: number) => `${API_BASE_URL}/notifications/${id}/read`,
+    MARK_ALL_AS_READ: `${API_BASE_URL}/notifications/read-all`,
+  },
+  DONATIONS: {
+    BASE: `${API_BASE_URL}/donations`,
+    BY_ID: (id: number) => `${API_BASE_URL}/donations/${id}`,
+    REPORTS: `${API_BASE_URL}/donations/reports`,
+    EXPORT: `${API_BASE_URL}/donations/export`,
+    UPDATE_STATUS: (id: number) => `${API_BASE_URL}/donations/${id}/status`,
   },
 };
 
@@ -78,7 +116,7 @@ export async function fetchWithTimeout(
  */
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('authToken');
+  return localStorage.getItem('auth_token');
 }
 
 /**
@@ -86,7 +124,7 @@ export function getAuthToken(): string | null {
  */
 export function setAuthToken(token: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('authToken', token);
+  localStorage.setItem('auth_token', token);
 }
 
 /**
@@ -94,11 +132,34 @@ export function setAuthToken(token: string): void {
  */
 export function removeAuthToken(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('authToken');
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('auth_user');
 }
 
 /**
- * Utilidad para hacer fetch con autenticación
+ * ✅ NUEVA FUNCIÓN: Manejar tokens expirados
+ */
+function handleUnauthorized(): void {
+  if (typeof window === 'undefined') return;
+  
+  console.warn('🔒 Token expirado o no autorizado. Redirigiendo al login...');
+  
+  // Limpiar sesión
+  removeAuthToken();
+  
+  // Guardar URL actual para redirección después del login
+  const currentPath = window.location.pathname;
+  if (currentPath !== '/login' && currentPath !== '/auth/login') {
+    localStorage.setItem('redirectAfterLogin', currentPath);
+  }
+  
+  // Redirigir al login
+  window.location.href = '/login?reason=expired';
+}
+
+/**
+ * ✅ MEJORADO: Utilidad para hacer fetch con autenticación
+ * Ahora maneja automáticamente tokens expirados (401/403)
  */
 export async function fetchWithAuth(
   url: string,
@@ -107,11 +168,54 @@ export async function fetchWithAuth(
 ): Promise<Response> {
   const token = getAuthToken();
   
-  return fetchWithTimeout(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      ...(token ? { Authorization: token } : {}),
-    },
-  }, timeout);
+  try {
+    const response = await fetchWithTimeout(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }, timeout);
+    
+    // ✅ Detectar token expirado o no autorizado
+    if (response.status === 401 || response.status === 403) {
+      handleUnauthorized();
+      throw new Error('Sesión expirada. Por favor inicia sesión nuevamente.');
+    }
+    
+    return response;
+  } catch (error) {
+    // Si es un error de red o timeout, propagarlo
+    if (error instanceof Error && 
+        (error.message.includes('tiempo') || error.message.includes('network'))) {
+      throw error;
+    }
+    
+    // Para otros errores, también propagar
+    throw error;
+  }
+}
+
+/**
+ * ✅ NUEVA FUNCIÓN: Verificar si el usuario está autenticado
+ */
+export function isAuthenticated(): boolean {
+  return getAuthToken() !== null;
+}
+
+/**
+ * ✅ NUEVA FUNCIÓN: Obtener usuario del localStorage
+ */
+export function getAuthUser(): any | null {
+  if (typeof window === 'undefined') return null;
+  const user = localStorage.getItem('auth_user');
+  return user ? JSON.parse(user) : null;
+}
+
+/**
+ * ✅ NUEVA FUNCIÓN: Guardar usuario en localStorage
+ */
+export function setAuthUser(user: any): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('auth_user', JSON.stringify(user));
 }

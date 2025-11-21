@@ -12,6 +12,8 @@
 
   Mantener alineado con el backend: cuando el backend cambie las respuestas,
   actualizar estos tipos para mantener el contrato sincronizado.
+  
+  @version 2.0 - Actualizado con propiedades completas del usuario
 */
 
 export interface ILoginRequest {
@@ -27,11 +29,19 @@ export interface IRegisterRequest {
   phone: string;
 }
 
+/**
+ * Información del usuario autenticado (ACTUALIZADO V2)
+ */
 export interface IUserInfo {
   id: string;
   email: string;
   name: string;
-  role?: string;
+  role: string;
+  // ✅ Nuevas propiedades agregadas
+  userId?: number;
+  telefono?: string;
+  createdAt?: string;
+  isActive?: boolean;
 }
 
 export interface ILoginResponse {
@@ -85,4 +95,21 @@ export interface IVerifyTokenResponse {
   valid: boolean;
   email?: string;
   message?: string;
+}
+
+// ========================================
+// ✅ NUEVA: Datos del usuario en localStorage
+// ========================================
+
+/**
+ * Datos del usuario guardados en localStorage
+ */
+export interface IStoredUserData {
+  userId: number;
+  email: string;
+  fullName: string;
+  role: string;
+  telefono?: string;
+  createdAt?: string;
+  isActive?: boolean;
 }

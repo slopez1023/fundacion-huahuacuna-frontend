@@ -1,183 +1,356 @@
+/**
+ * Dashboard Administrativo
+ * Panel de control exclusivo para administradores de la Fundación Huahuacuna
+ * 
+ * @author Fundación Huahuacuna
+ * @version 1.0
+ */
+
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import Navbar from "@/src/components/ui/Navbar";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Navbar from '@/src/components/ui/Navbar';
+import Breadcrumb from '@/src/components/ui/Breadcrumb';
+import ProtectedRoute from '@/src/components/admin/ProtectedRoute';
+import StatCard from '@/src/components/admin/StatCard';
+import ApplicationCard from '@/src/components/admin/ApplicationCard';
+import ApplicationModal from '@/src/components/admin/ApplicationModal';
+import { useApplications } from '@/src/hooks/useApplications';
+import { useNotifications } from '@/src/hooks/useNotifications';
+import { useAuth } from '@/src/hooks/useAuth';
+import type { ApplicationResponse, ApplicationStatus, ApplicationType } from '@/src/types/application';
 
-/*
-  DashboardPage
-
-  Propósito:
-  - Página principal del área autenticada / landing del usuario.
-  - Muestra la composición de varios componentes: `Navbar`, hero, cards y footer.
-
-  Responsabilidad:
-  - Componer la interfaz a partir de componentes pequeños y mantener la página lo más declarativa posible.
-  - No contiene lógica de autenticación; esa responsabilidad la tiene `useAuth` y `Navbar`.
-
-  Buenas prácticas:
-  - Mantener las páginas enfocadas en composición visual y extraer bloques reutilizables cuando crezcan.
-*/
 export default function DashboardPage() {
-  return (
-    <main className="min-h-screen bg-[var(--background)] font-['Poppins']">
-      <Navbar />
-      <section className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          {/* Hero left */}
-          <div className="space-y-6">
-            <h1 className="text-3xl lg:text-4xl font-bold text-[#1E3A5F] leading-tight">
-              Conectando Corazones,
-              <br />
-              Transformando Vidas
-            </h1>
-            <p className="text-[#6B7280]">
-              Apadrina un niño y sé parte del cambio. Brindamos apoyo integral en educación, salud, nutrición y bienestar a niños en edad escolar.
-            </p>
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  
+  // Hooks de datos
+  const {
+    applications,
+    statistics,
+    isLoading,
+    error,
+    fetchApplications,
+    approve,
+    reject,
+    updateStatus,
+    clearError
+  } = useApplications({ autoFetch: true });
 
-            <div className="flex items-center gap-4 mt-4">
-              <Link href="/apadrinar" className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-[#FDD835] text-[#1E3A5F] font-semibold shadow-sm">
-                Apadrinar un niño
-              </Link>
-              <Link href="/donaciones" className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-gray-200 text-[#1E3A5F]">
-                Hacer una Donación
-              </Link>
+const {
+  unreadCount,
+  fetchUnreadCount
+} = useNotifications({ pollInterval: 30000 });
+
+  // Estado local
+  const [selectedApplication, setSelectedApplication] = useState<ApplicationResponse | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filterType, setFilterType] = useState<ApplicationType | 'ALL'>('ALL');
+  const [filterStatus, setFilterStatus] = useState<ApplicationStatus | 'ALL'>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Refrescar datos al montar
+  useEffect(() => {
+    fetchApplications();
+    fetchUnreadCount();
+  }, [fetchApplications, fetchUnreadCount]);
+
+  // Filtrar aplicaciones
+  const filteredApplications = applications.filter(app => {
+    const matchesType = filterType === 'ALL' || app.type === filterType;
+    const matchesStatus = filterStatus === 'ALL' || app.status === filterStatus;
+    const matchesSearch = searchTerm === '' || 
+      app.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesType && matchesStatus && matchesSearch;
+  });
+
+  // Handlers
+  const handleViewDetails = (application: ApplicationResponse) => {
+    setSelectedApplication(application);
+    setIsModalOpen(true);
+  };
+
+  const handleApprove = async (id: number, comments?: string): Promise<void> => {
+    try {
+      await approve(id, comments);
+      await fetchApplications();
+    } catch (error) {
+      console.error('Error al aprobar:', error);
+      alert('Error al aprobar la solicitud. Por favor, intenta nuevamente.');
+    }
+  };
+
+  const handleReject = async (id: number, comments: string): Promise<void> => {
+    try {
+      await reject(id, comments);
+      await fetchApplications();
+    } catch (error) {
+      console.error('Error al rechazar:', error);
+      alert('Error al rechazar la solicitud. Por favor, intenta nuevamente.');
+    }
+  };
+
+  const handleUpdateStatus = async (
+    id: number, 
+    status: ApplicationStatus, 
+    comments?: string
+  ): Promise<void> => {
+    try {
+      await updateStatus(id, status, comments);
+      await fetchApplications();
+    } catch (error) {
+      console.error('Error al actualizar estado:', error);
+      alert('Error al actualizar el estado. Por favor, intenta nuevamente.');
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
+  return (
+    <ProtectedRoute>
+      <main className="min-h-screen bg-gray-50 font-['Poppins']">
+        <Navbar />
+        
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <Breadcrumb items={[{ label: "Panel Administrativo" }]} />
+            
+            <div className="mt-6 flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-[#1E3A5F]">
+                  Panel Administrativo
+                </h1>
+                <p className="text-gray-600 mt-2">
+                  Bienvenida, <span className="font-semibold">{user?.name || 'Administradora'}</span>
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                {/* Notificaciones */}
+                <button 
+                  onClick={() => router.push('/dashboard/notifications')}
+                  className="relative p-2 text-gray-600 hover:text-[#1E3A5F] transition-colors rounded-lg hover:bg-gray-100"
+                  title="Notificaciones"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-gray-600 hover:text-red-600 transition-colors font-medium rounded-lg hover:bg-gray-100"
+                >
+                  Cerrar Sesión
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Hero right (image card) */}
-          <div className="flex justify-center lg:justify-end">
-            <div className="relative w-full max-w-sm">
-              <Image src="/Home.jpg" alt="Niños" width={420} height={300} className="rounded-xl shadow-lg object-cover w-full h-auto" />
-              <div className="absolute bottom-4 left-4 bg-white rounded-lg p-3 shadow-md flex items-center gap-3">
-                <Image src="/logo.png" alt="logo" width={36} height={36} className="rounded-full" />
-                <div>
-                  <p className="text-sm font-semibold text-[#1E3A5F]">Fundación</p>
-                  <p className="text-xs text-gray-500">Huahuacuna</p>
+          {/* Estadísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard
+              title="Total Solicitudes"
+              value={statistics?.total || 0}
+              icon={
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              }
+              color="blue"
+            />
+
+            <StatCard
+              title="Pendientes"
+              value={statistics?.pendientes || 0}
+              icon={
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+              color="yellow"
+            />
+
+            <StatCard
+              title="Aprobadas"
+              value={statistics?.aprobadas || 0}
+              icon={
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+              color="green"
+            />
+
+            <StatCard
+              title="Voluntarios"
+              value={statistics?.totalVoluntarios || 0}
+              icon={
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              }
+              color="blue"
+            />
+          </div>
+
+          {/* Filtros y búsqueda */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Búsqueda */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Buscar
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Buscar por nombre o email..."
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"                  />
+                  <svg className="w-5 h-5 text-gray-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Cards section */}
-        <section className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-xl p-6 shadow-sm text-center">
-            <h3 className="font-semibold text-[#1E3A5F] mb-2">Apadrinamiento</h3>
-            <p className="text-sm text-gray-500">Conoce cómo apadrinar y transformar una vida.</p>
-            <Link href="/apadrinar" className="mt-4 inline-block text-sm text-[#FDD835] font-semibold">Apadrinar ahora</Link>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-sm text-center">
-            <h3 className="font-semibold text-[#1E3A5F] mb-2">Voluntariado</h3>
-            <p className="text-sm text-gray-500">Únete como voluntario y apoya proyectos locales.</p>
-            <Link href="/voluntariado" className="mt-4 inline-block text-sm text-[#FDD835] font-semibold">Ser voluntario</Link>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-sm text-center">
-            <h3 className="font-semibold text-[#1E3A5F] mb-2">Proyectos</h3>
-            <p className="text-sm text-gray-500">Descubre nuestros proyectos en curso y sus impactos.</p>
-            <Link href="/proyectos" className="mt-4 inline-block text-sm text-[#FDD835] font-semibold">Ver proyectos</Link>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 shadow-sm text-center">
-            <h3 className="font-semibold text-[#1E3A5F] mb-2">Donaciones</h3>
-            <p className="text-sm text-gray-500">Aporta recursos para el bienestar de los niños.</p>
-            <Link href="/donaciones" className="mt-4 inline-block text-sm text-[#FDD835] font-semibold">Donar ahora</Link>
-          </div>
-        </section>
-
-        {/* Misión y Visión */}
-        <section className="mt-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-[#1E3A5F] mb-4">Nuestra Misión y Visión: Un Compromiso con el Futuro</h2>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white rounded-xl p-8 shadow-sm">
-              <h3 className="text-xl font-semibold text-[#1E3A5F] mb-4">Nuestra Misión</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Apoyar a la niñez vulnerable mediante apadrinamientos y ayudas ocasionales para mejorar su calidad de vida a través de procesos educativos que incluyan a la familia. Esto es posible gracias a la colaboración económica y de voluntariado de personas y entidades nacionales y extranjeras.
-              </p>
-            </div>
-            <div className="bg-white rounded-xl p-8 shadow-sm">
-              <h3 className="text-xl font-semibold text-[#1E3A5F] mb-4">Nuestra Visión</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Ser una institución que gestione permanentemente recursos para aumentar el número de niños beneficiados y programas que respondan a necesidades concretas. Contaremos con un grupo interdisciplinario para lograr familias cohesionadas, pacíficas y autogestionadoras, formando ciudadanos responsables y propositivos.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Historia */}
-        <section className="mt-16 bg-white rounded-xl p-8 shadow-sm">
-          <h2 className="text-2xl font-bold text-[#1E3A5F] mb-6">Nuestra Historia: Un Viaje de Solidaridad y Crecimiento</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            <div>
-              <div className="space-y-4">
-                <p className="text-gray-600">
-                  La Fundación Huahuacuna inició su labor social en junio de 2003 como "Semilla italiana" gracias a la visión y liderazgo de Vargas Mayra Alejandra López Osorio y Lina María Guapacha, con el apoyo del Padre Agostino Abate, esta iniciativa floreció.
-                </p>
-                <p className="text-gray-600">
-                  El 31 de mayo de 2004, se constituyó legalmente como Fundación Huahuacuna. Con la adhesión de Ángela Patricia Menza Astudillo y María Clarena Castaño Bedoya, nuestra alcance se expandió, beneficiando a más de 140 niños apadrinados por Cáritas de Acqui Terme, Italia, y dos por padrinos de Armenia.
-                </p>
+              {/* Filtro por tipo */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo
+                </label>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value as ApplicationType | 'ALL')}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900"                >
+                  <option value="ALL">Todos</option>
+                  <option value="VOLUNTARIO">Voluntarios</option>
+                  <option value="PADRINO">Padrinos</option>
+                </select>
               </div>
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold text-[#1E3A5F] mb-3">Nuestro Programa</h3>
-                <p className="text-gray-600">
-                  Nos centramos en el apadrinamiento de niños en edad escolar, brindándoles apoyo integral en:
-                </p>
-                <ul className="list-disc list-inside text-gray-600 mt-2 space-y-1">
-                  <li>Educación formal y no formal</li>
-                  <li>Salud y nutrición</li>
-                  <li>Vestido y calzado</li>
-                  <li>Complementos alimenticios</li>
-                  <li>Actividades de esparcimiento</li>
-                </ul>
+
+              {/* Filtro por estado */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Estado
+                </label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as ApplicationStatus | 'ALL')}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900"
+                >
+                  <option value="ALL">Todos</option>
+                  <option value="PENDIENTE">Pendientes</option>
+                  <option value="EN_REVISION">En Revisión</option>
+                  <option value="APROBADO">Aprobados</option>
+                  <option value="RECHAZADO">Rechazados</option>
+                </select>
               </div>
             </div>
-            <div className="relative">
-              <Image 
-                src="/Historia.jpg" 
-                alt="Actividades del programa" 
-                width={500} 
-                height={400} 
-                className="rounded-xl shadow-lg object-cover"
-              />
-            </div>
-          </div>
-        </section>
 
-        {/* CTA */}
-        <div className="mt-16 bg-gradient-to-r from-[#FDD835]/10 to-[#FDD835]/30 p-8 rounded-xl text-center">
-          <h3 className="text-2xl font-bold text-[#1E3A5F]">Sé Parte del Cambio Hoy</h3>
-          <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
-            Apoya a niños en situación de vulnerabilidad con un aporte que transforma vidas. Tu contribución hace la diferencia en su educación, salud y bienestar.
-          </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Link href="#" className="px-8 py-3 rounded-full bg-[#FDD835] text-[#1E3A5F] font-semibold hover:bg-[#FBC02D] transition-colors">
-              Apadrinar un niño
-            </Link>
-            <Link href="#" className="px-8 py-3 rounded-full border border-gray-200 text-[#1E3A5F] hover:bg-gray-50 transition-colors">
-              Hacer una Donación
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer simple */}
-      <footer className="mt-12 bg-white py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col lg:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-3">
-            <Image src="/logo.png" alt="logo" width={48} height={48} />
-            <div>
-              <p className="font-semibold text-[#1E3A5F]">Fundación Huahuacuna</p>
-              <p className="text-sm text-gray-500">Conectando corazones, transformando vidas</p>
+            {/* Botón de refrescar */}
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={fetchApplications}
+                disabled={isLoading}
+                className="px-4 py-2 bg-[#1E3A5F] text-white rounded-lg hover:bg-[#152a45] transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {isLoading ? 'Actualizando...' : 'Actualizar'}
+              </button>
             </div>
           </div>
 
-          <div className="text-sm text-gray-500">© {new Date().getFullYear()} Fundación Huahuacuna. Todos los derechos reservados.</div>
+          {/* Mensaje de error */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <p className="text-red-800 text-sm font-medium">{error}</p>
+                <button
+                  onClick={clearError}
+                  className="text-red-600 text-sm underline mt-1 hover:text-red-700"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Lista de solicitudes */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-[#1E3A5F]">
+                Solicitudes ({filteredApplications.length})
+              </h2>
+            </div>
+
+            {isLoading ? (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A5F] mb-4"></div>
+                <p className="text-gray-600">Cargando solicitudes...</p>
+              </div>
+            ) : filteredApplications.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No hay solicitudes
+                </h3>
+                <p className="text-gray-600">
+                  {searchTerm || filterType !== 'ALL' || filterStatus !== 'ALL'
+                    ? 'No se encontraron solicitudes con los filtros aplicados'
+                    : 'Aún no hay solicitudes registradas'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {filteredApplications.map((application) => (
+                  <ApplicationCard
+                    key={application.id}
+                    application={application}
+                    onView={handleViewDetails}
+                    onApprove={handleApprove}
+                    onReject={handleReject}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </footer>
-    </main>
+
+        {/* Modal de detalles */}
+        <ApplicationModal
+          application={selectedApplication}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedApplication(null);
+          }}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onUpdateStatus={handleUpdateStatus}
+        />
+      </main>
+    </ProtectedRoute>
   );
 }

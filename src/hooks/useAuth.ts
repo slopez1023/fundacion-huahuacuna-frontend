@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { API_ENDPOINTS, fetchWithTimeout } from "../lib/api";
+import { saveToken, saveUser, getToken, getUser, removeToken } from "../lib/auth/tokenStorage";
 import type {
   ILoginRequest,
   ILoginResponse,
@@ -15,40 +16,47 @@ import type {
 } from "../types/auth";
 
 /*
-  useAuth - Hook de autenticación
+  useAuth - Hook de autenticación (ACTUALIZADO V2)
 
   Propósito:
   - Centraliza la lógica de autenticación del frontend: login, register, logout,
-    gestión de estado (user, token) y persistencia en sessionStorage.
-  - NUEVO: Recuperación de contraseña (forgotPassword, resetPassword, verifyResetToken)
+    gestión de estado (user, token) y persistencia en localStorage.
+  - ACTUALIZADO: Incluye todas las propiedades del usuario (telefono, createdAt, userId, isActive)
 
   Responsabilidad:
   - Exponer una API simple: { user, token, isLoading, error, login, logout, 
     forgotPassword, resetPassword, verifyResetToken, clearError }
-  - Manejar side-effects mínimos (guardar/leer de sessionStorage)
+  - Manejar side-effects mínimos (guardar/leer de localStorage)
 
   Interacciones:
   - Usa `fetchWithTimeout` y `API_ENDPOINTS` desde `src/lib/api.ts` para comunicarse con el backend.
   - Consumido por `LoginForm`, `RegisterForm`, `ForgotPasswordForm`, `ResetPasswordForm` y `Navbar`.
-
-  Notas y buenas prácticas:
-  - Mantener este hook ligero: ninguna lógica de UI aquí.
-  - En producción considerar tokens en cookies httpOnly y refresh tokens en lugar de sessionStorage.
-  - Es una buena candidata a pruebas unitarias (mockear la capa fetch).
 */
 
 export function useAuth() {
   const [user, setUser] = useState<IUserInfo | null>(() => {
     if (typeof window !== "undefined") {
-      const savedUser = sessionStorage.getItem("auth_user");
-      return savedUser ? JSON.parse(savedUser) : null;
+      const savedUser = getUser();
+      if (savedUser) {
+        return {
+          id: savedUser.userId?.toString() || '',
+          email: savedUser.email || '',
+          name: savedUser.fullName || '',
+          role: savedUser.role || '',
+          // ✅ Propiedades adicionales
+          userId: savedUser.userId,
+          telefono: savedUser.telefono,
+          createdAt: savedUser.createdAt,
+          isActive: savedUser.isActive ?? true,
+        };
+      }
     }
     return null;
   });
   
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
-      return sessionStorage.getItem("auth_token");
+      return getToken();
     }
     return null;
   });
@@ -86,21 +94,34 @@ export function useAuth() {
       if (data.success && data.data) {
         const { token, userId, email: userEmail, fullName, role } = data.data;
         
-        // Adaptar al formato que espera el frontend
+        // ✅ Guardar token usando tokenStorage con todas las propiedades
+        saveToken(token);
+        saveUser({
+          userId,
+          email: userEmail,
+          fullName,
+          role,
+          // Propiedades adicionales que podrían venir del backend
+          telefono: data.data.telefono,
+          createdAt: data.data.createdAt,
+          isActive: data.data.isActive,
+        });
+
+        // ✅ Adaptar al formato completo que espera el frontend
         const user: IUserInfo = {
           id: userId.toString(),
           email: userEmail,
           name: fullName,
-          role: role
+          role: role,
+          // Propiedades adicionales
+          userId: userId,
+          telefono: data.data.telefono,
+          createdAt: data.data.createdAt,
+          isActive: data.data.isActive ?? true,
         };
 
         setUser(user);
         setToken(token);
-
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_token", token);
-          sessionStorage.setItem("auth_user", JSON.stringify(user));
-        }
       } else {
         throw new Error(data.message || "Error desconocido");
       }
@@ -123,8 +144,7 @@ export function useAuth() {
     setToken(null);
     setError(null);
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("auth_token");
-      sessionStorage.removeItem("auth_user");
+      removeToken();
     }
   }, []);
 
