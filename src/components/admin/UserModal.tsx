@@ -118,7 +118,7 @@ export default function UserModal({ isOpen, onClose, onSubmit, user, mode }: Use
               type="text"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent bg-white text-gray-900"
               required
               disabled={isSubmitting}
             />
@@ -133,7 +133,7 @@ export default function UserModal({ isOpen, onClose, onSubmit, user, mode }: Use
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent bg-white text-gray-900"
               required
               disabled={isSubmitting}
             />
@@ -148,7 +148,7 @@ export default function UserModal({ isOpen, onClose, onSubmit, user, mode }: Use
               type="tel"
               value={formData.telefono}
               onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent bg-white text-gray-900"
               required
               disabled={isSubmitting}
             />
@@ -181,7 +181,7 @@ export default function UserModal({ isOpen, onClose, onSubmit, user, mode }: Use
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent bg-white text-gray-900"
               required
               disabled={isSubmitting}
             >

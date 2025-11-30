@@ -8,12 +8,24 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/ui/Navbar';
-import Breadcrumb from '@/components/ui/Breadcrumb';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Notification } from '@/lib/api/notificationApi';
 import { useAuth } from '@/hooks/useAuth';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { 
+  Bell, 
+  DollarSign, 
+  UserPlus, 
+  AlertTriangle, 
+  Info, 
+  CheckCircle2, 
+  Trash2, 
+  Check, 
+  Filter,
+  RefreshCw,
+  Clock
+} from 'lucide-react';
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -33,6 +45,7 @@ export default function NotificationsPage() {
 
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; type: 'delete' | 'markAll' | null; notificationId?: number }>({ isOpen: false, type: null });
 
   // Filtrar notificaciones
   const filteredNotifications = notifications.filter(notif => {
@@ -45,29 +58,13 @@ export default function NotificationsPage() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'DONATION':
-        return (
-          <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <DollarSign className="w-5 h-5 text-green-600" />;
       case 'APPLICATION':
-        return (
-          <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        );
+        return <UserPlus className="w-5 h-5 text-blue-600" />;
       case 'SYSTEM':
-        return (
-          <svg className="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        );
+        return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
       default:
-        return (
-          <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <Info className="w-5 h-5 text-gray-600" />;
     }
   };
 
@@ -116,23 +113,24 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleMarkAllAsRead = async () => {
-    if (window.confirm('¿Marcar todas las notificaciones como leídas?')) {
-      try {
-        await markAllRead();
-      } catch (err) {
-        console.error('Error al marcar todas como leídas:', err);
-      }
-    }
+  const handleMarkAllAsRead = () => {
+    setConfirmDialog({ isOpen: true, type: 'markAll' });
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('¿Estás seguro de eliminar esta notificación?')) {
-      try {
-        await remove(id);
-      } catch (err) {
-        console.error('Error al eliminar:', err);
+  const handleDelete = (id: number) => {
+    setConfirmDialog({ isOpen: true, type: 'delete', notificationId: id });
+  };
+
+  const confirmAction = async () => {
+    try {
+      if (confirmDialog.type === 'markAll') {
+        await markAllRead();
+      } else if (confirmDialog.type === 'delete' && confirmDialog.notificationId) {
+        await remove(confirmDialog.notificationId);
       }
+      setConfirmDialog({ isOpen: false, type: null });
+    } catch (err) {
+      console.error('Error al realizar acción:', err);
     }
   };
 
@@ -144,126 +142,101 @@ export default function NotificationsPage() {
   return (
     <ProtectedRoute>
       <main className="min-h-screen bg-gray-50 font-['Poppins']">
-        <Navbar />
-        
         <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <Breadcrumb items={[
-              { label: "Panel Administrativo", href: "/dashboard" },
-              { label: "Notificaciones" }
-            ]} />
-            
-            <div className="mt-6 flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-[#1E3A5F] flex items-center gap-3">
-                  <svg className="w-8 h-8 text-[#FDD835]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  Notificaciones
-                </h1>
-                <p className="text-gray-600 mt-2">
-                  Mantente al tanto de las últimas actualizaciones
-                </p>
-              </div>
-              
+          {/* Header con gradiente */}
+          <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2c5282] rounded-2xl p-6 md:p-8 text-white shadow-lg mb-8">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllAsRead}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#1E3A5F] text-white rounded-lg hover:bg-[#152a45] transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Marcar todas como leídas
-                  </button>
-                )}
-
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-gray-600 hover:text-red-600 transition-colors font-medium rounded-lg hover:bg-gray-100"
-                >
-                  Cerrar Sesión
-                </button>
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Bell className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold">
+                    Notificaciones
+                  </h1>
+                  <p className="text-white/90 mt-1">
+                    Mantente al tanto de las últimas actualizaciones
+                  </p>
+                </div>
               </div>
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="bg-[#FDD835] text-[#1E3A5F] px-5 py-2.5 rounded-xl font-semibold hover:bg-[#fce34f] transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span className="hidden sm:inline">Marcar todas como leídas</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Estadísticas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total</p>
-                  <p className="text-3xl font-bold text-[#1E3A5F]">{notifications.length}</p>
+                  <p className="text-sm font-medium text-gray-600">Total</p>
+                  <p className="text-3xl font-bold text-[#1E3A5F] mt-2">{notifications.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                  <Bell className="w-7 h-7 text-blue-600" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Sin leer</p>
-                  <p className="text-3xl font-bold text-[#FDD835]">{unreadCount}</p>
+                  <p className="text-sm font-medium text-gray-600">Sin leer</p>
+                  <p className="text-3xl font-bold text-yellow-600 mt-2">{unreadCount}</p>
                 </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                <div className="w-14 h-14 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl flex items-center justify-center">
+                  <AlertTriangle className="w-7 h-7 text-yellow-600" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Leídas</p>
-                  <p className="text-3xl font-bold text-gray-400">
+                  <p className="text-sm font-medium text-gray-600">Leídas</p>
+                  <p className="text-3xl font-bold text-green-600 mt-2">
                     {notifications.length - unreadCount}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center">
+                  <CheckCircle2 className="w-7 h-7 text-green-600" />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Filtros */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-5 h-5 text-[#1E3A5F]" />
+              <h3 className="text-lg font-bold text-[#1E3A5F]">Filtrar por:</h3>
+            </div>
+            
             <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                <span className="text-sm font-medium text-gray-700">Filtrar por:</span>
-              </div>
-
               {/* Filtro de lectura */}
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     filter === 'all'
-                      ? 'bg-[#1E3A5F] text-white'
+                      ? 'bg-[#1E3A5F] text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  Todas
+                  Todos
                 </button>
                 <button
                   onClick={() => setFilter('unread')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     filter === 'unread'
-                      ? 'bg-[#FDD835] text-[#1E3A5F]'
+                      ? 'bg-[#FDD835] text-[#1E3A5F] shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -272,30 +245,26 @@ export default function NotificationsPage() {
               </div>
 
               {/* Filtro de tipo */}
-              <div className="ml-auto">
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FDD835] focus:border-transparent text-gray-900"
-                >
-                  <option value="all">Todos los tipos</option>
-                  <option value="DONATION">Donaciones</option>
-                  <option value="APPLICATION">Solicitudes</option>
-                  <option value="SYSTEM">Sistema</option>
-                  <option value="INFO">Información</option>
-                </select>
-              </div>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900"
+              >
+                <option value="all">Todos los tipos</option>
+                <option value="DONATION">Donaciones</option>
+                <option value="APPLICATION">Solicitudes</option>
+                <option value="SYSTEM">Sistema</option>
+                <option value="INFO">Información</option>
+              </select>
 
               {/* Botón refrescar */}
               <button
                 onClick={fetchNotifications}
                 disabled={isLoading}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="ml-auto px-5 py-2.5 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl hover:shadow-md transition-all disabled:opacity-50 flex items-center gap-2 font-medium"
               >
-                <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                {isLoading ? 'Actualizando...' : 'Actualizar'}
+                <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                <span>{isLoading ? 'Actualizando...' : 'Actualizar'}</span>
               </button>
             </div>
           </div>
@@ -329,10 +298,8 @@ export default function NotificationsPage() {
           {/* Empty State */}
           {!isLoading && filteredNotifications.length === 0 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-              </svg>
-              <h3 className="text-lg font-semibold text-[#1E3A5F] mb-2">
+              <Bell className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-[#1E3A5F] mb-2">
                 No hay notificaciones
               </h3>
               <p className="text-gray-600">
@@ -387,9 +354,7 @@ export default function NotificationsPage() {
                         {/* Fecha y acciones */}
                         <div className="flex items-center justify-between mt-4">
                           <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <Clock className="w-4 h-4" />
                             {formatDate(notification.createdAt)}
                           </div>
 
@@ -397,22 +362,18 @@ export default function NotificationsPage() {
                             {!notification.isRead && (
                               <button
                                 onClick={() => handleMarkAsRead(notification.id)}
-                                className="p-2 text-gray-600 hover:text-[#1E3A5F] hover:bg-blue-50 rounded-lg transition-colors"
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all hover:scale-110"
                                 title="Marcar como leída"
                               >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
+                                <Check className="w-5 h-5" />
                               </button>
                             )}
                             <button
                               onClick={() => handleDelete(notification.id)}
-                              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all hover:scale-110"
                               title="Eliminar"
                             >
-                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </div>
                         </div>
@@ -423,6 +384,30 @@ export default function NotificationsPage() {
               ))}
             </div>
           )}
+
+        {/* ConfirmDialog para Marcar todas como leídas */}
+        <ConfirmDialog
+          isOpen={confirmDialog.isOpen && confirmDialog.type === 'markAll'}
+          onClose={() => setConfirmDialog({ isOpen: false, type: null })}
+          onConfirm={confirmAction}
+          title="Marcar todas como leídas"
+          message="¿Deseas marcar todas las notificaciones como leídas? Esta acción es irreversible."
+          confirmText="Marcar todas"
+          cancelText="Cancelar"
+          type="info"
+        />
+
+        {/* ConfirmDialog para Eliminar notificación */}
+        <ConfirmDialog
+          isOpen={confirmDialog.isOpen && confirmDialog.type === 'delete'}
+          onClose={() => setConfirmDialog({ isOpen: false, type: null })}
+          onConfirm={confirmAction}
+          title="Eliminar Notificación"
+          message="¿Estás seguro de que deseas eliminar esta notificación? No podrás recuperarla."
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+          type="danger"
+        />
         </div>
       </main>
     </ProtectedRoute>

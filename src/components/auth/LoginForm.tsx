@@ -23,7 +23,7 @@ import Link from "next/link";
  */
 export function LoginForm() {
   const router = useRouter();
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, isLoading, error, clearError, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,7 +58,17 @@ export function LoginForm() {
     try {
       await login(email, password);
       setSuccessMessage("¡Inicio de sesión exitoso!");
-      setTimeout(() => router.push("/dashboard"), 500);
+      
+      // Esperar un poco para que user se actualice
+      setTimeout(() => {
+        // Redirigir según el rol del usuario
+        if (user?.role === 'ADMIN') {
+          router.push("/dashboard");
+        } else {
+          // Padrinos y otros usuarios van a Home
+          router.push("/");
+        }
+      }, 500);
     } catch (err: any) {
       setLocalError(error || "Error en la autenticación");
     }

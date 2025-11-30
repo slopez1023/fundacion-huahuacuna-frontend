@@ -76,16 +76,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Tabs */}
-          <div className="flex mb-9 rounded-full overflow-hidden border-2 border-gray-200 bg-white h-[50px]">
-            <button 
-              type="button"
-              className="w-full bg-[#FDD835] text-[#1E3A5F] font-semibold text-[14px] transition-all relative z-10 hover:bg-[#FBC02D]"
-            >
-              Iniciar Sesión
-            </button>
-          </div>
-
           {/* Formulario */}
           <LoginForm />
         </div>

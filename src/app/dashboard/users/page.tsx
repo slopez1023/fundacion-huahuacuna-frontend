@@ -10,8 +10,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/ui/Navbar';
-import Breadcrumb from '@/components/ui/Breadcrumb';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
 import UserModal from '@/components/admin/UserModal';
 import UsersTable from '@/components/admin/UsersTable';
@@ -19,6 +17,17 @@ import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 import { useUsers } from '@/hooks/useUsers';
 import { useAuth } from '@/hooks/useAuth';
 import type { User, CreateUserDTO, UpdateUserDTO, UserRole } from '@/types/user';
+import { 
+  Users, 
+  UserPlus, 
+  Search, 
+  RefreshCw, 
+  CheckCircle2,
+  XCircle,
+  Shield,
+  Heart,
+  Handshake
+} from 'lucide-react';
 
 export default function UsersManagementPage() {
   const router = useRouter();
@@ -150,75 +159,87 @@ export default function UsersManagementPage() {
   return (
     <ProtectedRoute>
       <main className="min-h-screen bg-gray-50 font-['Poppins']">
-        <Navbar />
-        
         <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <Breadcrumb 
-              items={[
-                { label: "Panel Administrativo", href: "/dashboard" },
-                { label: "Gestión de Usuarios" }
-              ]} 
-            />
-            
-            <div className="mt-6 flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-[#1E3A5F]">
-                  Gestión de Usuarios
-                </h1>
-                <p className="text-gray-600 mt-2">
-                  Administra los usuarios del sistema
-                </p>
-              </div>
-              
+          {/* Header con gradiente */}
+          <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2c5282] rounded-2xl p-6 md:p-8 text-white shadow-lg mb-8">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                {/* Botón crear usuario */}
-                <button
-                  onClick={handleCreateUser}
-                  className="px-4 py-2 bg-[#FDD835] text-[#1E3A5F] font-semibold rounded-lg hover:bg-[#F7C948] transition-colors flex items-center gap-2 shadow-sm"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Crear Usuario
-                </button>
-
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-gray-600 hover:text-red-600 transition-colors font-medium rounded-lg hover:bg-gray-100"
-                >
-                  Cerrar Sesión
-                </button>
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold">
+                    Gestión de Usuarios
+                  </h1>
+                  <p className="text-white/90 mt-1">
+                    Administra los usuarios del sistema
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={handleCreateUser}
+                className="bg-[#FDD835] text-[#1E3A5F] px-5 py-2.5 rounded-xl font-semibold hover:bg-[#fce34f] transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
+              >
+                <UserPlus className="w-5 h-5" />
+                <span className="hidden sm:inline">Crear Usuario</span>
+              </button>
             </div>
           </div>
 
           {/* Estadísticas rápidas */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-              <p className="text-sm text-gray-600 mb-1">Total</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-600">Total</p>
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
               <p className="text-2xl font-bold text-[#1E3A5F]">{stats.total}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-              <p className="text-sm text-gray-600 mb-1">Activos</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-600">Activos</p>
+                <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                </div>
+              </div>
               <p className="text-2xl font-bold text-green-600">{stats.active}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-              <p className="text-sm text-gray-600 mb-1">Inactivos</p>
-              <p className="text-2xl font-bold text-gray-400">{stats.inactive}</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-600">Inactivos</p>
+                <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                  <XCircle className="w-5 h-5 text-gray-500" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-gray-500">{stats.inactive}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-              <p className="text-sm text-gray-600 mb-1">Admins</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-600">Admins</p>
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-purple-600" />
+                </div>
+              </div>
               <p className="text-2xl font-bold text-purple-600">{stats.admins}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-              <p className="text-sm text-gray-600 mb-1">Padrinos</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-600">Padrinos</p>
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
               <p className="text-2xl font-bold text-blue-600">{stats.padrinos}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-              <p className="text-sm text-gray-600 mb-1">Voluntarios</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-600">Voluntarios</p>
+                <div className="w-10 h-10 bg-gradient-to-br from-teal-100 to-teal-200 rounded-lg flex items-center justify-center">
+                  <Handshake className="w-5 h-5 text-teal-600" />
+                </div>
+              </div>
               <p className="text-2xl font-bold text-teal-600">{stats.voluntarios}</p>
             </div>
           </div>
@@ -262,11 +283,16 @@ export default function UsersManagementPage() {
           )}
 
           {/* Filtros y búsqueda */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Search className="w-5 h-5 text-[#1E3A5F]" />
+              <h3 className="text-lg font-bold text-[#1E3A5F]">Búsqueda y Filtros</h3>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Búsqueda */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Buscar
                 </label>
                 <div className="relative">
@@ -275,23 +301,21 @@ export default function UsersManagementPage() {
                     value={searchTerm}
                     onChange={(e) => handleSearch(e.target.value)}
                     placeholder="Buscar por nombre o email..."
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900 placeholder:text-gray-400"
                   />
-                  <svg className="w-5 h-5 text-gray-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                  <Search className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
                 </div>
               </div>
 
               {/* Filtro por rol */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Rol
                 </label>
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value as UserRole | 'ALL')}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900 font-medium"
                 >
                   <option value="ALL">Todos los roles</option>
                   <option value="ADMIN">Administradores</option>
@@ -302,13 +326,13 @@ export default function UsersManagementPage() {
 
               {/* Filtro por estado */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Estado
                 </label>
                 <select
                   value={filterActive}
                   onChange={(e) => setFilterActive(e.target.value as 'ALL' | 'true' | 'false')}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900 font-medium"
                 >
                   <option value="ALL">Todos</option>
                   <option value="true">Activos</option>
@@ -322,12 +346,10 @@ export default function UsersManagementPage() {
               <button
                 onClick={fetchUsers}
                 disabled={isLoading}
-                className="px-4 py-2 bg-[#1E3A5F] text-white rounded-lg hover:bg-[#152a45] transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-5 py-2.5 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl hover:shadow-md transition-all disabled:opacity-50 flex items-center gap-2 font-medium"
               >
-                <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                {isLoading ? 'Actualizando...' : 'Actualizar'}
+                <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                <span>{isLoading ? 'Actualizando...' : 'Actualizar'}</span>
               </button>
             </div>
           </div>

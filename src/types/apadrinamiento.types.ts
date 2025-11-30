@@ -9,6 +9,19 @@ export enum EstadoNino {
   INACTIVO = "INACTIVO"
 }
 
+export enum EstadoPadrino {
+  PENDIENTE = "PENDIENTE",
+  APROBADO = "APROBADO",
+  RECHAZADO = "RECHAZADO",
+  INACTIVO = "INACTIVO"
+}
+
+export enum EstadoApadrinamiento {
+  ACTIVO = "ACTIVO",
+  PAUSADO = "PAUSADO",
+  TERMINADO = "TERMINADO"
+}
+
 export interface ICrearNinoRequest {
   nombre: string;
   apellido: string;
@@ -48,4 +61,41 @@ export interface INinoResponse {
   estado: EstadoNino;
   fechaRegistro: string;
   fechaActualizacion: string;
+}
+
+// Tipos para Padrinos
+export interface IPadrinoResponse {
+  id: number;
+  usuario: { id: number; email: string };
+  nombreCompleto: string;
+  telefono: string;
+  pais: string;
+  numeroDocumento: string;
+  estado: EstadoPadrino;
+  ninoApadrinado?: INinoResponse;
+  estadoApadrinamiento?: EstadoApadrinamiento;
+  fechaRegistro: string;
+  fechaAprobacion?: string;
+}
+
+export interface ISeleccionarNinoRequest {
+  idNino: number;
+}
+
+export interface IApadrinamientoResponse {
+  id: number;
+  padrino: IPadrinoResponse;
+  nino: INinoResponse;
+  estado: EstadoApadrinamiento;
+  fechaInicio: string;
+  fechaFin?: string;
+}
+
+export interface IBitacoraEntrada {
+  id: number;
+  apadrinamiento: IApadrinamientoResponse;
+  titulo: string;
+  contenido: string;
+  fecha: string;
+  registradoPor: string; // "PADRINO" | "ADMINISTRADOR"
 }

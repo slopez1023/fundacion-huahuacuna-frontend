@@ -2,9 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/ui/Navbar";
-import Footer from "@/components/ui/Footer";
 import { useAuth } from "@/hooks/useAuth";
+import ProtectedRoute from "@/components/admin/ProtectedRoute";
+import { 
+  Settings as SettingsIcon, 
+  User, 
+  Mail, 
+  Phone, 
+  Lock, 
+  Bell, 
+  Save,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Shield,
+  Info
+} from "lucide-react";
 
 /**
  * SettingsPage
@@ -69,12 +82,11 @@ export default function SettingsPage() {
 
   if (!isMounted || isLoading) {
     return (
-      <main className="min-h-screen bg-[var(--background)] font-['Poppins']">
-        <Navbar />
-        <div className="flex items-center justify-center min-h-[60vh]">
+      <ProtectedRoute>
+        <main className="min-h-screen bg-gray-50 font-['Poppins'] flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A5F]"></div>
-        </div>
-      </main>
+        </main>
+      </ProtectedRoute>
     );
   }
 
@@ -168,308 +180,293 @@ export default function SettingsPage() {
     {
       id: "personal",
       label: "Información Personal",
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
-      ),
+      icon: <User className="w-5 h-5" />,
     },
     {
       id: "security",
       label: "Seguridad",
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-          />
-        </svg>
-      ),
+      icon: <Lock className="w-5 h-5" />,
     },
     {
       id: "notifications",
       label: "Notificaciones",
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
-      ),
+      icon: <Bell className="w-5 h-5" />,
     },
   ];
 
   return (
-    <main className="min-h-screen bg-[var(--background)] font-['Poppins']">
-      <Navbar />
-
-      <section className="max-w-6xl mx-auto px-6 py-12">
-        {/* Header con breadcrumb */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-            <button onClick={() => router.push("/dashboard")} className="hover:text-[#1E3A5F]">
-              Dashboard
-            </button>
-            <span>/</span>
-            <span className="text-[#1E3A5F] font-medium">Configuración</span>
-          </div>
-          <h1 className="text-3xl font-bold text-[#1E3A5F]">Configuración</h1>
-          <p className="text-gray-600 mt-2">Gestiona tu información personal y preferencias</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar con tabs */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <nav className="space-y-1">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                      setMessage(null);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                      activeTab === tab.id
-                        ? "bg-[#FDD835]/20 text-[#1E3A5F] font-semibold"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {tab.icon}
-                    <span className="text-sm">{tab.label}</span>
-                  </button>
-                ))}
-              </nav>
+    <ProtectedRoute>
+      <main className="min-h-screen bg-gray-50 font-['Poppins']">
+        <section className="max-w-7xl mx-auto px-6 py-8">
+          {/* Header con gradiente */}
+          <div className="bg-gradient-to-r from-[#1E3A5F] to-[#2c5282] rounded-2xl p-6 md:p-8 text-white shadow-lg mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <SettingsIcon className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold">
+                  Configuración
+                </h1>
+                <p className="text-white/90 mt-1">
+                  Gestiona tu información personal y preferencias
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Contenido principal */}
-          <div className="lg:col-span-3">
-            {/* Mensajes de éxito/error */}
-            {message && (
-              <div
-                className={`mb-6 p-4 rounded-lg ${
-                  message.type === "success"
-                    ? "bg-green-50 border border-green-200 text-green-800"
-                    : "bg-red-50 border border-red-200 text-red-800"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {message.type === "success" ? (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  )}
-                  <span className="font-medium">{message.text}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Tab: Información Personal */}
-            {activeTab === "personal" && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-xl font-bold text-[#1E3A5F] mb-6">Información Personal</h2>
-                <form onSubmit={handlePersonalInfoSubmit} className="space-y-6">
-                  <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre Completo
-                    </label>
-                    <input
-                      type="text"
-                      id="fullName"
-                      value={personalInfo.fullName}
-                      onChange={(e) => setPersonalInfo({ ...personalInfo, fullName: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Correo Electrónico
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={personalInfo.email}
-                      onChange={(e) => setPersonalInfo({ ...personalInfo, email: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
-                      required
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Usaremos este correo para comunicarnos contigo
-                    </p>
-                  </div>
-
-                  <div>
-                    <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-2">
-                      Teléfono
-                    </label>
-                    <input
-                      type="tel"
-                      id="telefono"
-                      value={personalInfo.telefono}
-                      onChange={(e) => setPersonalInfo({ ...personalInfo, telefono: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
-                      placeholder="Ej: 3001234567"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Sidebar con tabs */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+                <nav className="space-y-2">
+                  {tabs.map((tab) => (
                     <button
-                      type="button"
-                      onClick={() => router.push("/dashboard/profile")}
-                      className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="px-6 py-2.5 bg-[#FDD835] text-[#1E3A5F] font-semibold rounded-lg hover:bg-[#FBC02D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? "Guardando..." : "Guardar Cambios"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Tab: Seguridad */}
-            {activeTab === "security" && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-xl font-bold text-[#1E3A5F] mb-6">Cambiar Contraseña</h2>
-                <form onSubmit={handlePasswordSubmit} className="space-y-6">
-                  <div>
-                    <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                      Contraseña Actual
-                    </label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      value={passwordData.currentPassword}
-                      onChange={(e) =>
-                        setPasswordData({ ...passwordData, currentPassword: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nueva Contraseña
-                    </label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
-                      required
-                      minLength={6}
-                    />
-                    <p className="mt-1 text-xs text-gray-500">Mínimo 6 caracteres</p>
-                  </div>
-
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirmar Nueva Contraseña
-                    </label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      value={passwordData.confirmPassword}
-                      onChange={(e) =>
-                        setPasswordData({ ...passwordData, confirmPassword: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent"
-                      required
-                      minLength={6}
-                    />
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex gap-3">
-                      <svg
-                        className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <div>
-                        <p className="text-sm font-medium text-blue-900">Recomendaciones de seguridad</p>
-                        <ul className="mt-2 text-xs text-blue-700 space-y-1">
-                          <li>• Usa una combinación de letras, números y símbolos</li>
-                          <li>• No uses información personal obvia</li>
-                          <li>• Cambia tu contraseña regularmente</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3">
-                    <button
-                      type="button"
+                      key={tab.id}
                       onClick={() => {
-                        setPasswordData({
-                          currentPassword: "",
-                          newPassword: "",
-                          confirmPassword: "",
-                        });
+                        setActiveTab(tab.id);
                         setMessage(null);
                       }}
-                      className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${
+                        activeTab === tab.id
+                          ? "bg-gradient-to-r from-[#1E3A5F] to-[#2d5a8f] text-white font-semibold shadow-md"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
                     >
-                      Cancelar
+                      {tab.icon}
+                      <span className="text-sm">{tab.label}</span>
                     </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="px-6 py-2.5 bg-[#FDD835] text-[#1E3A5F] font-semibold rounded-lg hover:bg-[#FBC02D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? "Actualizando..." : "Actualizar Contraseña"}
+                  ))}
+                </nav>
+              </div>
+            </div>
+
+            {/* Contenido principal */}
+            <div className="lg:col-span-3">
+              {/* Mensajes de éxito/error */}
+              {message && (
+                <div
+                  className={`mb-6 p-4 rounded-xl ${
+                    message.type === "success"
+                      ? "bg-green-50 border border-green-200 text-green-800"
+                      : "bg-red-50 border border-red-200 text-red-800"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {message.type === "success" ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5" />
+                      )}
+                      <span className="font-medium">{message.text}</span>
+                    </div>
+                    <button onClick={() => setMessage(null)} className="hover:opacity-70">
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
-                </form>
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* Tab: Notificaciones */}
-            {activeTab === "notifications" && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-xl font-bold text-[#1E3A5F] mb-6">Preferencias de Notificaciones</h2>
+              {/* Tab: Información Personal */}
+              {activeTab === "personal" && (
+                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                  <h2 className="text-xl font-bold text-[#1E3A5F] mb-6 flex items-center gap-2">
+                    <User className="w-6 h-6" />
+                    Información Personal
+                  </h2>
+                  <form onSubmit={handlePersonalInfoSubmit} className="space-y-6">
+                    <div>
+                      <label htmlFor="fullName" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                        <User className="w-4 h-4 text-[#1E3A5F]" />
+                        Nombre Completo
+                      </label>
+                      <input
+                        type="text"
+                        id="fullName"
+                        value={personalInfo.fullName}
+                        onChange={(e) => setPersonalInfo({ ...personalInfo, fullName: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="email" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                        <Mail className="w-4 h-4 text-[#1E3A5F]" />
+                        Correo Electrónico
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        value={personalInfo.email}
+                        onChange={(e) => setPersonalInfo({ ...personalInfo, email: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900"
+                        required
+                      />
+                      <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                        <Info className="w-3 h-3" />
+                        Usaremos este correo para comunicarnos contigo
+                      </p>
+                    </div>
+
+                    <div>
+                      <label htmlFor="telefono" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                        <Phone className="w-4 h-4 text-[#1E3A5F]" />
+                        Teléfono
+                      </label>
+                      <input
+                        type="tel"
+                        id="telefono"
+                        value={personalInfo.telefono}
+                        onChange={(e) => setPersonalInfo({ ...personalInfo, telefono: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900"
+                        placeholder="Ej: 3001234567"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => router.push("/dashboard/profile")}
+                        className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-medium"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="px-6 py-3 bg-gradient-to-r from-[#FDD835] to-[#fce34f] text-[#1E3A5F] font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        <Save className="w-5 h-5" />
+                        {isSubmitting ? "Guardando..." : "Guardar Cambios"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Tab: Seguridad */}
+              {activeTab === "security" && (
+                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                  <h2 className="text-xl font-bold text-[#1E3A5F] mb-6 flex items-center gap-2">
+                    <Shield className="w-6 h-6" />
+                    Cambiar Contraseña
+                  </h2>
+                  <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                    <div>
+                      <label htmlFor="currentPassword" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                        <Lock className="w-4 h-4 text-[#1E3A5F]" />
+                        Contraseña Actual
+                      </label>
+                      <input
+                        type="password"
+                        id="currentPassword"
+                        value={passwordData.currentPassword}
+                        onChange={(e) =>
+                          setPasswordData({ ...passwordData, currentPassword: e.target.value })
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="newPassword" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                        <Lock className="w-4 h-4 text-[#1E3A5F]" />
+                        Nueva Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        id="newPassword"
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900"
+                        required
+                        minLength={6}
+                      />
+                      <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                        <Info className="w-3 h-3" />
+                        Mínimo 6 caracteres
+                      </p>
+                    </div>
+
+                    <div>
+                      <label htmlFor="confirmPassword" className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                        <Lock className="w-4 h-4 text-[#1E3A5F]" />
+                        Confirmar Nueva Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        id="confirmPassword"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E3A5F]/20 focus:border-[#1E3A5F] outline-none transition-all text-gray-900"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                      <div className="flex gap-3">
+                        <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-blue-900 mb-2">Recomendaciones de seguridad</p>
+                          <ul className="text-xs text-blue-700 space-y-1">
+                            <li className="flex items-center gap-2">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Usa una combinación de letras, números y símbolos
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <CheckCircle2 className="w-3 h-3" />
+                              No uses información personal obvia
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Cambia tu contraseña regularmente
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPasswordData({
+                            currentPassword: "",
+                            newPassword: "",
+                            confirmPassword: "",
+                          });
+                          setMessage(null);
+                        }}
+                        className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-medium"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="px-6 py-3 bg-gradient-to-r from-[#FDD835] to-[#fce34f] text-[#1E3A5F] font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        <Save className="w-5 h-5" />
+                        {isSubmitting ? "Actualizando..." : "Actualizar Contraseña"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Tab: Notificaciones */}
+              {activeTab === "notifications" && (
+                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+                  <h2 className="text-xl font-bold text-[#1E3A5F] mb-6 flex items-center gap-2">
+                    <Bell className="w-6 h-6" />
+                    Preferencias de Notificaciones
+                  </h2>
                 <div className="space-y-6">
                   <div className="flex items-center justify-between py-4 border-b border-gray-100">
                     <div className="flex-1">
@@ -534,24 +531,24 @@ export default function SettingsPage() {
                     </label>
                   </div>
 
-                  <div className="pt-4">
-                    <button
-                      onClick={() => {
-                        setMessage({ type: "success", text: "Preferencias guardadas exitosamente" });
-                      }}
-                      className="w-full px-6 py-2.5 bg-[#FDD835] text-[#1E3A5F] font-semibold rounded-lg hover:bg-[#FBC02D] transition-colors"
-                    >
-                      Guardar Preferencias
-                    </button>
+                    <div className="pt-6">
+                      <button
+                        onClick={() => {
+                          setMessage({ type: "success", text: "Preferencias guardadas exitosamente" });
+                        }}
+                        className="w-full px-6 py-3 bg-gradient-to-r from-[#FDD835] to-[#fce34f] text-[#1E3A5F] font-semibold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                      >
+                        <Save className="w-5 h-5" />
+                        Guardar Preferencias
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      </section>
-
-      <Footer />
-    </main>
+        </section>
+      </main>
+    </ProtectedRoute>
   );
 }

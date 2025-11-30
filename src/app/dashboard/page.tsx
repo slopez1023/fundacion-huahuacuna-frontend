@@ -1,6 +1,6 @@
 /**
- * Dashboard Administrativo
- * Panel de control exclusivo para administradores de la Fundación Huahuacuna
+ * Dashboard Principal - Resumen
+ * Vista general del panel administrativo con estadísticas y actividad reciente
  * 
  * @author Fundación Huahuacuna
  * @version 1.0
@@ -9,33 +9,39 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Navbar from "@/components/ui/Navbar";
+import Link from "next/link";
+import { 
+  LayoutDashboard, 
+  TrendingUp, 
+  Users, 
+  Heart, 
+  Calendar,
+  FileText,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
+  Activity,
+  UserPlus,
+  FolderHeart
+} from "lucide-react";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import { useAuth } from "@/hooks/useAuth";
 import { useApplications } from "@/hooks/useApplications";
 import { useNotifications } from "@/hooks/useNotifications";
 import StatCard from "@/components/admin/StatCard";
-import ApplicationCard from "@/components/admin/ApplicationCard";
-import ApplicationModal from "@/components/admin/ApplicationModal";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
-import type { ApplicationResponse, ApplicationType, ApplicationStatus } from "@/types/application";
+import type { ApplicationResponse } from "@/types/application";
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const { user, logout } = useAuth();
+export default function DashboardResumenPage() {
+  const { user } = useAuth();
   
   // Hooks de datos
   const {
     applications,
     statistics,
     isLoading,
-    error,
-    fetchApplications,
-    approve,
-    reject,
-    updateStatus,
-    clearError
+    fetchApplications
   } = useApplications({ autoFetch: true });
 
   const {
@@ -43,313 +49,278 @@ export default function DashboardPage() {
     fetchUnreadCount
   } = useNotifications({ pollInterval: 30000 });
 
-  // Estado local
-  const [selectedApplication, setSelectedApplication] = useState<ApplicationResponse | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filterType, setFilterType] = useState<ApplicationType | 'ALL'>('ALL');
-  const [filterStatus, setFilterStatus] = useState<ApplicationStatus | 'ALL'>('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
-
   // Refrescar datos al montar
   useEffect(() => {
     fetchApplications();
     fetchUnreadCount();
   }, [fetchApplications, fetchUnreadCount]);
 
-  // Filtrar aplicaciones
-  const filteredApplications = applications.filter((app: ApplicationResponse) => {
-    const matchesType = filterType === 'ALL' || app.type === filterType;
-    const matchesStatus = filterStatus === 'ALL' || app.status === filterStatus;
-    const matchesSearch = searchTerm === '' || 
-      app.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesType && matchesStatus && matchesSearch;
-  });
+  // Obtener las últimas 5 solicitudes
+  const recentApplications = applications.slice(0, 5);
 
-  // Handlers
-  const handleViewDetails = (application: ApplicationResponse) => {
-    setSelectedApplication(application);
-    setIsModalOpen(true);
-  };
-
-  const handleApprove = async (id: number, comments?: string): Promise<void> => {
-    try {
-      await approve(id, comments);
-      await fetchApplications();
-    } catch (error) {
-      console.error('Error al aprobar:', error);
-      alert('Error al aprobar la solicitud. Por favor, intenta nuevamente.');
-    }
-  };
-
-  const handleReject = async (id: number, comments: string): Promise<void> => {
-    try {
-      await reject(id, comments);
-      await fetchApplications();
-    } catch (error) {
-      console.error('Error al rechazar:', error);
-      alert('Error al rechazar la solicitud. Por favor, intenta nuevamente.');
-    }
-  };
-
-  const handleUpdateStatus = async (
-    id: number, 
-    status: ApplicationStatus, 
-    comments?: string
-  ): Promise<void> => {
-    try {
-      await updateStatus(id, status, comments);
-      await fetchApplications();
-    } catch (error) {
-      console.error('Error al actualizar estado:', error);
-      alert('Error al actualizar el estado. Por favor, intenta nuevamente.');
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
+  // Calcular tasa de aprobación
+  const approvalRate = statistics?.total 
+    ? Math.round((statistics.aprobadas / statistics.total) * 100) 
+    : 0;
 
   return (
     <ProtectedRoute>
       <main className="min-h-screen bg-gray-50 font-['Poppins']">
-        <Navbar />
-        
         <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Header */}
           <div className="mb-8">
-            <Breadcrumb items={[{ label: "Panel Administrativo" }]} />
-            
-            <div className="mt-6 flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-[#1E3A5F]">
-                  Panel Administrativo
-                </h1>
-                <p className="text-gray-600 mt-2">
-                  Bienvenida, <span className="font-semibold">{user?.name || 'Administradora'}</span>
-                </p>
-              </div>
-              
+            {/* Bienvenida con gradiente */}
+            <div className="mt-6 bg-gradient-to-r from-[#1E3A5F] to-[#2c5282] rounded-2xl p-6 md:p-8 text-white shadow-lg">
               <div className="flex items-center gap-4">
-                {/* Notificaciones */}
-                <button 
-                  onClick={() => router.push('/dashboard/notifications')}
-                  className="relative p-2 text-gray-600 hover:text-[#1E3A5F] transition-colors rounded-lg hover:bg-gray-100"
-                  title="Notificaciones"
-                >
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-gray-600 hover:text-red-600 transition-colors font-medium rounded-lg hover:bg-gray-100"
-                >
-                  Cerrar Sesión
-                </button>
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <LayoutDashboard className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <p className="text-white/90 text-sm font-medium">
+                    {new Date().getHours() < 12 ? '¡Buenos días!' : new Date().getHours() < 18 ? '¡Buenas tardes!' : '¡Buenas noches!'}
+                  </p>
+                  <h1 className="text-2xl md:text-3xl font-bold">
+                    {user?.name || 'Santiago Cardona'}
+                  </h1>
+                </div>
               </div>
+              <p className="text-white/90 mt-3">
+                Bienvenido al panel de control de la Fundación Huahuacuna
+              </p>
             </div>
           </div>
 
-          {/* Estadísticas */}
+          {/* Estadísticas principales */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
               title="Total Solicitudes"
               value={statistics?.total || 0}
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              }
+              icon={<FileText className="w-6 h-6" />}
               color="blue"
             />
 
             <StatCard
               title="Pendientes"
               value={statistics?.pendientes || 0}
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
+              icon={<Clock className="w-6 h-6" />}
               color="yellow"
             />
 
             <StatCard
               title="Aprobadas"
               value={statistics?.aprobadas || 0}
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
+              icon={<CheckCircle2 className="w-6 h-6" />}
               color="green"
             />
 
             <StatCard
               title="Voluntarios"
               value={statistics?.totalVoluntarios || 0}
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              }
+              icon={<Users className="w-6 h-6" />}
               color="blue"
             />
           </div>
 
-          {/* Filtros y búsqueda */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Búsqueda */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Buscar
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Buscar por nombre o email..."
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"                  />
-                  <svg className="w-5 h-5 text-gray-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+          {/* Grid de dos columnas */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Actividad Reciente - 2/3 */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                      <Activity className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-[#1E3A5F]">Actividad Reciente</h2>
+                      <p className="text-sm text-gray-600">Últimas solicitudes registradas</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/dashboard/solicitudes"
+                    className="text-[#1E3A5F] hover:text-[#FDD835] font-medium text-sm flex items-center gap-1 transition-colors"
+                  >
+                    Ver todas
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+
+                {isLoading ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-[#1E3A5F] border-t-transparent"></div>
+                    <p className="text-gray-600 mt-3">Cargando actividad...</p>
+                  </div>
+                ) : recentApplications.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileText className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-600">No hay actividad reciente</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentApplications.map((app: ApplicationResponse) => (
+                      <div
+                        key={app.id}
+                        className="flex items-center gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors border border-gray-200"
+                      >
+                        <div className="w-10 h-10 bg-gradient-to-br from-[#1E3A5F] to-[#2c5282] text-white rounded-lg flex items-center justify-center font-bold flex-shrink-0">
+                          {app.fullName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">{app.fullName}</p>
+                          <p className="text-sm text-gray-600 truncate">{app.email}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            app.type === 'VOLUNTARIO' 
+                              ? 'bg-purple-100 text-purple-700'
+                              : 'bg-pink-100 text-pink-700'
+                          }`}>
+                            {app.type === 'VOLUNTARIO' ? 'Voluntario' : 'Padrino'}
+                          </span>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            app.status === 'PENDIENTE' ? 'bg-yellow-100 text-yellow-700' :
+                            app.status === 'APROBADO' ? 'bg-green-100 text-green-700' :
+                            app.status === 'RECHAZADO' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {app.status === 'PENDIENTE' ? 'Pendiente' :
+                             app.status === 'APROBADO' ? 'Aprobado' :
+                             app.status === 'RECHAZADO' ? 'Rechazado' :
+                             'En Revisión'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Métricas Rápidas - 1/3 */}
+            <div className="space-y-6">
+              {/* Tasa de Aprobación */}
+              <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md">
+                    <TrendingUp className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-700">Tasa de Aprobación</h3>
+                    <p className="text-xs text-gray-500">Del total de solicitudes</p>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="relative w-32 h-32 mx-auto">
+                    <svg className="transform -rotate-90 w-32 h-32">
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="56"
+                        stroke="currentColor"
+                        strokeWidth="10"
+                        fill="transparent"
+                        className="text-gray-200"
+                      />
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="56"
+                        stroke="currentColor"
+                        strokeWidth="10"
+                        fill="transparent"
+                        strokeDasharray={`${2 * Math.PI * 56}`}
+                        strokeDashoffset={`${2 * Math.PI * 56 * (1 - approvalRate / 100)}`}
+                        className="text-green-500"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-[#1E3A5F]">{approvalRate}%</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Filtro por tipo */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo
-                </label>
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value as ApplicationType | 'ALL')}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900"                >
-                  <option value="ALL">Todos</option>
-                  <option value="VOLUNTARIO">Voluntarios</option>
-                  <option value="PADRINO">Padrinos</option>
-                </select>
+              {/* Accesos Rápidos */}
+              <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                <h3 className="text-lg font-bold text-[#1E3A5F] mb-4">Accesos Rápidos</h3>
+                <div className="space-y-2">
+                  <Link
+                    href="/dashboard/solicitudes"
+                    className="flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors border border-blue-200"
+                  >
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <span className="font-semibold text-blue-900">Ver Solicitudes</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/ninos"
+                    className="flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors border border-purple-200"
+                  >
+                    <Users className="w-5 h-5 text-purple-600" />
+                    <span className="font-semibold text-purple-900">Gestionar Niños</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/eventos"
+                    className="flex items-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-colors border border-green-200"
+                  >
+                    <Calendar className="w-5 h-5 text-green-600" />
+                    <span className="font-semibold text-green-900">Ver Eventos</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/proyectos"
+                    className="flex items-center gap-3 p-3 bg-yellow-50 hover:bg-yellow-100 rounded-xl transition-colors border border-yellow-200"
+                  >
+                    <FolderHeart className="w-5 h-5 text-yellow-600" />
+                    <span className="font-semibold text-yellow-900">Ver Proyectos</span>
+                  </Link>
+                </div>
               </div>
-
-              {/* Filtro por estado */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Estado
-                </label>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as ApplicationStatus | 'ALL')}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900"
-                >
-                  <option value="ALL">Todos</option>
-                  <option value="PENDIENTE">Pendientes</option>
-                  <option value="EN_REVISION">En Revisión</option>
-                  <option value="APROBADO">Aprobados</option>
-                  <option value="RECHAZADO">Rechazados</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Botón de refrescar */}
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={fetchApplications}
-                disabled={isLoading}
-                className="px-4 py-2 bg-[#1E3A5F] text-white rounded-lg hover:bg-[#152a45] transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                {isLoading ? 'Actualizando...' : 'Actualizar'}
-              </button>
             </div>
           </div>
 
-          {/* Mensaje de error */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <div className="flex-1">
-                <p className="text-red-800 text-sm font-medium">{error}</p>
-                <button
-                  onClick={clearError}
-                  className="text-red-600 text-sm underline mt-1 hover:text-red-700"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Tarjetas informativas adicionales */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Notificaciones */}
+            {unreadCount > 0 && (
+              <Link href="/dashboard/notifications">
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl shadow-md border-2 border-yellow-200 p-6 hover:shadow-lg transition-all cursor-pointer">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center shadow-md">
+                      <AlertCircle className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-yellow-900">
+                        Tienes {unreadCount} {unreadCount === 1 ? 'notificación nueva' : 'notificaciones nuevas'}
+                      </h3>
+                      <p className="text-sm text-yellow-700">Haz clic para ver los detalles</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )}
 
-          {/* Lista de solicitudes */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-[#1E3A5F]">
-                Solicitudes ({filteredApplications.length})
-              </h2>
-            </div>
-
-            {isLoading ? (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A5F] mb-4"></div>
-                <p className="text-gray-600">Cargando solicitudes...</p>
-              </div>
-            ) : filteredApplications.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No hay solicitudes
-                </h3>
-                <p className="text-gray-600">
-                  {searchTerm || filterType !== 'ALL' || filterStatus !== 'ALL'
-                    ? 'No se encontraron solicitudes con los filtros aplicados'
-                    : 'Aún no hay solicitudes registradas'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredApplications.map((application: ApplicationResponse) => (
-                  <ApplicationCard
-                    key={application.id}
-                    application={application}
-                    onView={handleViewDetails}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
-                  />
-                ))}
-              </div>
+            {/* Solicitudes Pendientes */}
+            {statistics && statistics.pendientes > 0 && (
+              <Link href="/dashboard/solicitudes">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-md border-2 border-blue-200 p-6 hover:shadow-lg transition-all cursor-pointer">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-md">
+                      <Clock className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-blue-900">
+                        {statistics.pendientes} {statistics.pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}
+                      </h3>
+                      <p className="text-sm text-blue-700">Requieren tu atención</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             )}
           </div>
         </div>
-
-        {/* Modal de detalles */}
-        <ApplicationModal
-          application={selectedApplication}
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedApplication(null);
-          }}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          onUpdateStatus={handleUpdateStatus}
-        />
       </main>
     </ProtectedRoute>
   );
