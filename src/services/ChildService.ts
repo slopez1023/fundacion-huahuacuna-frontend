@@ -64,8 +64,18 @@ export const childService = {
     return response.data;
   },
 
-  // ELIMINAR
+  // ELIMINAR (ya no se usa, pero lo dejamos por compatibilidad)
   delete: async (id: number) => {
     await axios.delete(`${API_URL}/${id}`, getAuthHeaders());
+  },
+
+  // INHABILITAR (nuevo método)
+  inactivate: async (id: number, reason: string) => {
+    const response = await axios.patch<Child>(
+      `${API_URL}/${id}/inactivate`, 
+      { reason },
+      getAuthHeaders()
+    );
+    return response.data;
   }
 };

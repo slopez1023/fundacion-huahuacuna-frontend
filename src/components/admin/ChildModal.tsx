@@ -12,14 +12,16 @@ import {
   Heart,
   Users,
   MapPin,
-  AlertCircle
+  AlertCircle,
+  Upload,
+  Trash2
 } from "lucide-react";
 
 interface ChildModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
-  childToEdit?: Child | null; // Para editar un niño existente
+  childToEdit?: Child | null;
 }
 
 export default function ChildModal({ isOpen, onClose, onSaved, childToEdit }: ChildModalProps) {
@@ -33,6 +35,11 @@ export default function ChildModal({ isOpen, onClose, onSaved, childToEdit }: Ch
     status: childToEdit?.status || "AVAILABLE",
     needs: childToEdit?.needs || "",
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>(childToEdit?.imageUrl || "");
+  const [uploadMethod, setUploadMethod] = useState<"url" | "file">(
+    childToEdit?.imageUrl ? "url" : "file"
+  );
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -61,6 +68,48 @@ export default function ChildModal({ isOpen, onClose, onSaved, childToEdit }: Ch
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar tipo de archivo
+      if (!file.type.match(/image\/(png|jpg|jpeg)/)) {
+        setErrors({ ...errors, image: "Solo se permiten archivos PNG o JPG" });
+        return;
+      }
+
+      // Validar tamaño (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors({ ...errors, image: "La imagen no debe superar los 5MB" });
+        return;
+      }
+
+      setImageFile(file);
+      setErrors({ ...errors, image: "" });
+
+      // Crear preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setFormData({ ...formData, imageUrl: "" });
+  };
+
+  const convertImageToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -70,15 +119,25 @@ export default function ChildModal({ isOpen, onClose, onSaved, childToEdit }: Ch
 
     setLoading(true);
     try {
+      let finalFormData = { ...formData };
+
+      // Si hay un archivo de imagen, convertirlo a base64
+      if (imageFile && uploadMethod === "file") {
+        const base64Image = await convertImageToBase64(imageFile);
+        finalFormData.imageUrl = base64Image;
+      }
+
       if (childToEdit?.id) {
         // Editar existente
-        await childService.update(childToEdit.id, formData as Child);
+        await childService.update(childToEdit.id, finalFormData as Child);
       } else {
         // Crear nuevo
-        await childService.create(formData as Child);
+        await childService.create(finalFormData as Child);
       }
+      
       onSaved();
       onClose();
+      
       // Limpiar formulario
       setFormData({ 
         firstName: "", 
@@ -90,6 +149,8 @@ export default function ChildModal({ isOpen, onClose, onSaved, childToEdit }: Ch
         status: "AVAILABLE",
         needs: ""
       });
+      setImageFile(null);
+      setImagePreview("");
       setErrors({});
     } catch (error) {
       console.error("Error al guardar:", error);
@@ -110,6 +171,8 @@ export default function ChildModal({ isOpen, onClose, onSaved, childToEdit }: Ch
       status: "AVAILABLE",
       needs: ""
     });
+    setImageFile(null);
+    setImagePreview("");
     setErrors({});
     onClose();
   };
@@ -279,33 +342,143 @@ export default function ChildModal({ isOpen, onClose, onSaved, childToEdit }: Ch
             </div>
           )}
 
-          {/* URL de la Foto */}
+          {/* Imagen del Niño */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+            <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
               <Image className="w-4 h-4 text-[#1E3A5F]" />
-              URL de la Foto
+              Foto del Niño
             </label>
-            <input
-              type="url"
-              placeholder="https://ejemplo.com/foto.jpg"
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835] outline-none text-gray-900 transition-all hover:border-gray-300"
-              value={formData.imageUrl}
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-            />
-            <p className="text-xs text-gray-500 mt-2">
-              Pega aquí el enlace directo a la imagen del niño (opcional)
-            </p>
-            {formData.imageUrl && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                <p className="text-xs font-medium text-gray-600 mb-2">Vista previa:</p>
-                <img 
-                  src={formData.imageUrl} 
-                  alt="Preview" 
-                  className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
+
+            {/* Selector de método */}
+            <div className="flex gap-3 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setUploadMethod("file");
+                  setFormData({ ...formData, imageUrl: "" });
+                }}
+                className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all border-2 ${
+                  uploadMethod === "file"
+                    ? "bg-[#1E3A5F] text-white border-[#1E3A5F]"
+                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <Upload className="w-4 h-4 inline mr-2" />
+                Subir Archivo
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUploadMethod("url");
+                  setImageFile(null);
+                  setImagePreview("");
+                }}
+                className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all border-2 ${
+                  uploadMethod === "url"
+                    ? "bg-[#1E3A5F] text-white border-[#1E3A5F]"
+                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <Image className="w-4 h-4 inline mr-2" />
+                URL de Imagen
+              </button>
+            </div>
+
+            {/* Subir archivo */}
+            {uploadMethod === "file" && (
+              <div>
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#FDD835] transition-all">
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg, image/jpg"
+                    onChange={handleImageFileChange}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="cursor-pointer flex flex-col items-center gap-3"
+                  >
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Upload className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700">
+                        Haz clic para subir una imagen
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        PNG o JPG (máx. 5MB)
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {errors.image && (
+                  <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.image}
+                  </p>
+                )}
+
+                {/* Preview de archivo subido */}
+                {imagePreview && uploadMethod === "file" && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="flex items-start gap-4">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-24 h-24 rounded-xl object-cover border-2 border-gray-200"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-700">
+                          {imageFile?.name}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {imageFile && (imageFile.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* URL de imagen */}
+            {uploadMethod === "url" && (
+              <div>
+                <input
+                  type="url"
+                  placeholder="https://ejemplo.com/foto.jpg"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835] outline-none text-gray-900 transition-all hover:border-gray-300"
+                  value={formData.imageUrl}
+                  onChange={(e) => {
+                    setFormData({ ...formData, imageUrl: e.target.value });
+                    setImagePreview(e.target.value);
                   }}
                 />
+                <p className="text-xs text-gray-500 mt-2">
+                  Pega aquí el enlace directo a la imagen del niño
+                </p>
+                {formData.imageUrl && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <p className="text-xs font-medium text-gray-600 mb-2">Vista previa:</p>
+                    <img
+                      src={formData.imageUrl}
+                      alt="Preview"
+                      className="w-24 h-24 rounded-xl object-cover border-2 border-gray-200"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

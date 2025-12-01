@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { childService, Child } from "@/services/ChildService";
-import { Trash2, Plus, Edit, Users, Search, Filter, Heart } from "lucide-react";
+import { Trash2, Plus, Edit, Users, Search, Filter, Heart, Ban } from "lucide-react";
 import ChildModal from "@/components/admin/ChildModal";
-import Breadcrumb from "@/components/ui/Breadcrumb";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import InactivateDialog from "@/components/admin/InactivateDialog";
 
 export default function NinosPage() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -14,7 +13,11 @@ export default function NinosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
-  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; childId: number | null }>({ isOpen: false, childId: null });
+  const [childToEdit, setChildToEdit] = useState<Child | null>(null);
+  const [inactivateDialog, setInactivateDialog] = useState<{ 
+    isOpen: boolean; 
+    child: Child | null 
+  }>({ isOpen: false, child: null });
 
   // Cargar niños al entrar
   useEffect(() => {
@@ -32,18 +35,29 @@ export default function NinosPage() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    setConfirmDialog({ isOpen: true, childId: id });
+  const handleEdit = (child: Child) => {
+    setChildToEdit(child);
+    setIsModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (confirmDialog.childId) {
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setChildToEdit(null);
+  };
+
+  const handleInactivate = (child: Child) => {
+    setInactivateDialog({ isOpen: true, child });
+  };
+
+  const confirmInactivate = async (reason: string) => {
+    if (inactivateDialog.child?.id) {
       try {
-        await childService.delete(confirmDialog.childId);
+        await childService.inactivate(inactivateDialog.child.id, reason);
         await loadChildren();
-        setConfirmDialog({ isOpen: false, childId: null });
+        setInactivateDialog({ isOpen: false, child: null });
       } catch (error) {
-        console.error("Error al eliminar niño:", error);
+        console.error("Error al inhabilitar niño:", error);
+        throw error;
       }
     }
   };
@@ -79,7 +93,10 @@ export default function NinosPage() {
                   </div>
                 </div>
                 <button 
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => {
+                    setChildToEdit(null);
+                    setIsModalOpen(true);
+                  }}
                   className="bg-[#FDD835] text-[#1E3A5F] px-6 py-3 rounded-xl flex items-center gap-2 hover:bg-[#FEC601] transition-all shadow-lg hover:shadow-xl font-bold transform hover:-translate-y-0.5"
                 >
                   <Plus className="w-5 h-5" />
@@ -221,18 +238,21 @@ export default function NinosPage() {
                         <td className="p-4">
                           <div className="flex gap-2">
                             <button 
+                              onClick={() => handleEdit(child)}
                               className="p-2.5 text-blue-600 hover:bg-blue-100 rounded-xl transition-all hover:scale-110 border border-blue-200"
                               title="Editar"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
-                            <button 
-                              onClick={() => child.id && handleDelete(child.id)}
-                              className="p-2.5 text-red-600 hover:bg-red-100 rounded-xl transition-all hover:scale-110 border border-red-200"
-                              title="Eliminar"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {child.status !== 'INACTIVE' && (
+                              <button 
+                                onClick={() => handleInactivate(child)}
+                                className="p-2.5 text-orange-600 hover:bg-orange-100 rounded-xl transition-all hover:scale-110 border border-orange-200"
+                                title="Inhabilitar"
+                              >
+                                <Ban className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -244,23 +264,20 @@ export default function NinosPage() {
           </div>
         </div>
 
-        {/* ConfirmDialog para Eliminar */}
-        <ConfirmDialog
-          isOpen={confirmDialog.isOpen}
-          onClose={() => setConfirmDialog({ isOpen: false, childId: null })}
-          onConfirm={confirmDelete}
-          title="Eliminar Niño"
-          message="¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer."
-          confirmText="Eliminar"
-          cancelText="Cancelar"
-          type="danger"
+        {/* Dialog para Inhabilitar */}
+        <InactivateDialog
+          isOpen={inactivateDialog.isOpen}
+          child={inactivateDialog.child}
+          onClose={() => setInactivateDialog({ isOpen: false, child: null })}
+          onConfirm={confirmInactivate}
         />
 
         {/* Modal */}
         <ChildModal 
           isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)}
-          onSaved={loadChildren} 
+          onClose={handleCloseModal}
+          onSaved={loadChildren}
+          childToEdit={childToEdit}
         />
       </main>
     </ProtectedRoute>

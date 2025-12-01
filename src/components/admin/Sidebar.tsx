@@ -17,7 +17,8 @@ import {
   FileText,
   Home,
   CheckCircle2,
-  MessageCircle
+  MessageCircle,
+  BookOpen
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -26,9 +27,9 @@ const menuItems = [
   { name: "Resumen", icon: LayoutDashboard, href: "/dashboard", section: "main" },
   { name: "Solicitudes", icon: FileText, href: "/dashboard/solicitudes", section: "main" },
   { name: "Niños (Apadrinar)", icon: Users, href: "/dashboard/ninos", section: "main" },
+  { name: "Bitácoras", icon: BookOpen, href: "/dashboard/bitacoras", section: "main" }, // ✅ NUEVO
   { name: "Eventos", icon: Calendar, href: "/dashboard/eventos", section: "main" },
   { name: "Proyectos", icon: FolderHeart, href: "/dashboard/proyectos", section: "main" },
-  // ✅ NUEVO: Enlace a mensajes de padrinos
   { name: "Mensajes", icon: MessageCircle, href: "/dashboard/mensajes", section: "main", badge: "chat" },
 ];
 

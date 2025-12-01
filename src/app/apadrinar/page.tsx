@@ -5,7 +5,7 @@
  * - Para admin: Redirecciona al panel de gestión de niños
  * 
  * @author Fundación Huahuacuna
- * @version 4.0 - Con carruseles
+ * @version 4.1 - Con carruseles y formulario integrado
  */
 
 "use client";
@@ -18,6 +18,8 @@ import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/ui/Footer';
 import Link from 'next/link';
 import Image from 'next/image';
+import { createSponsorApplication } from '@/lib/api/applicationApi';
+import type { SponsorApplicationDTO } from '@/types/application';
 
 export default function ApadrinarPage() {
   const { user, token } = useAuth();
@@ -194,7 +196,21 @@ function Carousel({
 // ============================================================================
 
 function PublicApadrinamientoView() {
+  const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Estados del formulario
+  const [isLoadingForm, setIsLoadingForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [formData, setFormData] = useState<SponsorApplicationDTO>({
+    fullName: '',
+    email: '',
+    phone: '',
+    country: '',
+    idNumber: '',
+    idDocumentPath: ''
+  });
 
   useEffect(() => {
     const checkMobile = () => {
@@ -209,6 +225,92 @@ function PublicApadrinamientoView() {
     const element = document.getElementById('programas');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Maneja cambios en los inputs
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev: SponsorApplicationDTO) => ({ ...prev, [name]: value }));
+  };
+
+  // Valida el formulario
+  const validateForm = (): boolean => {
+    if (!formData.fullName.trim()) {
+      setError('El nombre completo es obligatorio');
+      return false;
+    }
+
+    if (!formData.email.trim()) {
+      setError('El correo electrónico es obligatorio');
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Por favor, ingresa un correo electrónico válido');
+      return false;
+    }
+
+    if (!formData.phone.trim()) {
+      setError('El teléfono es obligatorio');
+      return false;
+    }
+
+    if (!formData.country.trim()) {
+      setError('El país de residencia es obligatorio');
+      return false;
+    }
+
+    if (!formData.idNumber.trim()) {
+      setError('El número de cédula/documento es obligatorio');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Maneja el envío del formulario
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoadingForm(true);
+
+    try {
+      const response = await createSponsorApplication(formData);
+
+      if (response.success) {
+        setSuccess(true);
+        // Limpiar formulario
+        setFormData({
+          fullName: '',
+          email: '',
+          phone: '',
+          country: '',
+          idNumber: '',
+          idDocumentPath: ''
+        });
+
+        // Mostrar mensaje de éxito por 4 segundos y redirigir
+        setTimeout(() => {
+          router.push('/');
+        }, 4000);
+      } else {
+        setError(response.message || 'Error al enviar la solicitud');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      setError(errorMessage);
+    } finally {
+      setIsLoadingForm(false);
     }
   };
 
@@ -396,13 +498,13 @@ function PublicApadrinamientoView() {
                 Con más de <strong>21 años de experiencia</strong>, transformamos vidas en el Quindío.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link 
-                  href="/solicitud-padrino"
+                <a 
+                  href="#formulario-inscripcion"
                   className="group relative px-8 py-4 bg-gradient-to-r from-[#FDD835] to-[#FBC02D] text-[#1E3A5F] font-bold rounded-xl hover:shadow-xl hover:scale-105 transition-all duration-300"
                 >
                   <span className="relative z-10">Quiero Ser Padrino</span>
                   <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </Link>
+                </a>
                 <button
                   onClick={scrollToPrograms}
                   className="px-8 py-4 bg-white/80 backdrop-blur-sm border-2 border-[#1E3A5F] text-[#1E3A5F] font-bold rounded-xl hover:bg-white hover:shadow-lg transition-all duration-300"
@@ -522,15 +624,15 @@ function PublicApadrinamientoView() {
                   entre todos los niños que disfrutan de este programa.
                 </p>
 
-                <Link
-                  href="/solicitud-padrino"
+                <a
+                  href="#formulario-inscripcion"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#FDD835] to-[#FBC02D] text-[#1E3A5F] rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                   Ser Padrino Integral
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -625,6 +727,256 @@ function PublicApadrinamientoView() {
                 <RazonCard key={index} razon={razon} />
               ))}
             </Carousel>
+          </div>
+        </section>
+
+        {/* Separador visual */}
+        <div className="relative h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-16"></div>
+
+        {/* FORMULARIO DE INSCRIPCIÓN */}
+        <section id="formulario-inscripcion" className="mb-20 scroll-mt-24">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-[#1E3A5F] mb-4">
+              Formulario de Inscripción
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Completa tus datos para iniciar el proceso de apadrinamiento
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Formulario */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              {/* Mensajes de error o éxito */}
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-800 text-sm">{error}</p>
+                </div>
+              )}
+
+              {success && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-green-800 text-sm font-medium">
+                    ¡Solicitud enviada exitosamente!
+                  </p>
+                  <p className="text-green-700 text-sm mt-1">
+                    Gracias por tu interés en apadrinar. Te contactaremos pronto 
+                    para los siguientes pasos. Serás redirigido en unos segundos...
+                  </p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Nombre Completo */}
+                <div>
+                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Nombre Completo *
+                  </label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"
+                    placeholder="Nombres y apellidos"
+                    disabled={isLoadingForm}
+                    required
+                  />
+                </div>
+
+                {/* Correo Electrónico */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Correo Electrónico *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"
+                    placeholder="tu@email.com"
+                    disabled={isLoadingForm}
+                    required
+                  />
+                </div>
+
+                {/* Teléfono */}
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Teléfono *
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"
+                    placeholder="+57 300 123 4567"
+                    disabled={isLoadingForm}
+                    required
+                  />
+                </div>
+
+                {/* País de Residencia */}
+                <div>
+                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                    País de Residencia *
+                  </label>
+                  <select
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900"
+                    disabled={isLoadingForm}
+                    required
+                  >
+                    <option value="">Selecciona un país</option>
+                    <option value="Colombia">Colombia</option>
+                    <option value="Italia">Italia</option>
+                    <option value="España">España</option>
+                    <option value="Estados Unidos">Estados Unidos</option>
+                    <option value="México">México</option>
+                    <option value="Argentina">Argentina</option>
+                    <option value="Chile">Chile</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+
+                {/* Cédula de Ciudadanía */}
+                <div>
+                  <label htmlFor="idNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                    Cédula de Ciudadanía / Documento de Identidad *
+                  </label>
+                  <input
+                    type="text"
+                    id="idNumber"
+                    name="idNumber"
+                    value={formData.idNumber}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent transition-all text-gray-900 placeholder:text-gray-400"
+                    placeholder="Número de documento"
+                    disabled={isLoadingForm}
+                    required
+                  />
+                </div>
+
+                {/* Nota sobre documento */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    <strong>Nota:</strong> Después de enviar esta solicitud, te contactaremos 
+                    para solicitar una copia de tu documento de identidad.
+                  </p>
+                </div>
+
+                {/* Botón de envío */}
+                <button
+                  type="submit"
+                  disabled={isLoadingForm || success}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-[#FDD835] to-[#FBC02D] text-[#1E3A5F] font-bold rounded-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {isLoadingForm ? 'Enviando...' : 'Comenzar Apadrinamiento'}
+                </button>
+
+                <p className="text-xs text-gray-500 text-center">
+                  * Campos obligatorios
+                </p>
+              </form>
+            </div>
+
+            {/* Información Adicional */}
+            <div className="space-y-6">
+              {/* Preguntas Frecuentes */}
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h3 className="text-xl font-bold text-[#1E3A5F] mb-4">
+                  Preguntas Frecuentes
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-[#1E3A5F] mb-2 flex items-start gap-2">
+                      <span className="text-[#FDD835] mt-0.5">▸</span>
+                      ¿Cómo funciona el apadrinamiento integral?
+                    </h4>
+                    <p className="text-sm text-gray-600 leading-relaxed pl-5">
+                      El dinero se maneja mediante un fondo común que garantiza la igualdad entre 
+                      todos los niños beneficiarios, cubriendo educación, salud, alimentación y más.
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1E3A5F] mb-2 flex items-start gap-2">
+                      <span className="text-[#FDD835] mt-0.5">▸</span>
+                      ¿Puedo conocer al niño que apadrino?
+                    </h4>
+                    <p className="text-sm text-gray-600 leading-relaxed pl-5">
+                      Sí, organizamos encuentros periódicos donde los padrinos pueden conocer a 
+                      los niños y participar en actividades especiales de integración.
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1E3A5F] mb-2 flex items-start gap-2">
+                      <span className="text-[#FDD835] mt-0.5">▸</span>
+                      ¿Cuál es el compromiso económico?
+                    </h4>
+                    <p className="text-sm text-gray-600 leading-relaxed pl-5">
+                      El apadrinamiento es una colaboración económica anual. Te contactaremos 
+                      con los detalles específicos según las necesidades actuales del programa.
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#1E3A5F] mb-2 flex items-start gap-2">
+                      <span className="text-[#FDD835] mt-0.5">▸</span>
+                      ¿Cómo garantizan la transparencia?
+                    </h4>
+                    <p className="text-sm text-gray-600 leading-relaxed pl-5">
+                      Realizamos rendición de cuentas anual y hacemos uso transparente de 
+                      todos los recursos económicos recibidos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ayudas Ocasionales */}
+              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100/70 rounded-2xl p-6 border border-yellow-200">
+                <h3 className="font-bold text-[#1E3A5F] mb-3 text-lg">
+                  ¿Prefieres hacer ayudas ocasionales?
+                </h3>
+                <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                  También puedes colaborar con necesidades específicas (matrícula, uniforme, 
+                  medicamentos, calzado) sin un compromiso a largo plazo. Esto te permite 
+                  hacer un acto de bondad con quienes más lo necesitan.
+                </p>
+                <Link
+                  href="/donaciones"
+                  className="inline-block px-6 py-2 bg-white text-[#1E3A5F] rounded-lg font-semibold shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300"
+                >
+                  Ver Donaciones
+                </Link>
+              </div>
+
+              {/* Contacto */}
+              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <h3 className="font-bold text-[#1E3A5F] mb-3 text-lg">
+                  ¿Necesitas más información?
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Estamos aquí para resolver todas tus dudas sobre el proceso de apadrinamiento 
+                  y los programas de la fundación.
+                </p>
+                <Link
+                  href="/contacto"
+                  className="inline-flex items-center gap-2 px-6 py-2 bg-[#1E3A5F] text-white rounded-lg font-semibold hover:bg-[#152a45] hover:scale-105 transition-all duration-300"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Contactar
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
       </div>

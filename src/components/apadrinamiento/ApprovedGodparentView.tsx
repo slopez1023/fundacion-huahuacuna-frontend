@@ -1,7 +1,13 @@
 /**
  * ApprovedGodparentView - Vista para padrinos aprobados
  * Muestra lista de niños disponibles o el niño apadrinado con bitácora y chat
+ * 
+ * CORRECCIÓN v2.0: Removida la funcionalidad de agregar entradas a la bitácora.
+ * El padrino solo puede VER la bitácora y DESCARGARLA.
+ * Solo el administrador puede agregar entradas.
+ * 
  * @author Fundación Huahuacuna
+ * @version 2.0 - Solo lectura de bitácora
  */
 
 "use client";
@@ -25,7 +31,8 @@ interface ChatMessage {
   id: number;
   contenido: string;
   fecha: string;
-  enviado_por: "PADRINO" | "ADMINISTRADOR";
+  enviado_por?: "PADRINO" | "ADMINISTRADOR";
+  enviadoPor?: "PADRINO" | "ADMINISTRADOR";
 }
 
 export default function ApprovedGodparentView() {
@@ -91,6 +98,7 @@ export default function ApprovedGodparentView() {
     }
   }, [successMessage]);
 
+  // Seleccionar un niño para apadrinar
   const handleSelectChild = async (childId: number, childName: string) => {
     try {
       setLoading(true);
@@ -116,20 +124,11 @@ export default function ApprovedGodparentView() {
     }
   };
 
-  const handleAddLogEntry = async (titulo: string, contenido: string) => {
-    if (!godchild) return;
-    try {
-      await godparentService.addLogEntry(godchild.id, titulo, contenido);
-      // Recargar bitácora
-      const newLog = await godparentService.getGodchildLog(godchild.id);
-      setLogEntries(newLog);
-      setSuccessMessage("Entrada agregada a la bitácora");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error al agregar entrada";
-      setError(errorMessage);
-    }
-  };
+  // ❌ REMOVIDO: handleAddLogEntry
+  // El padrino NO debe poder agregar entradas a la bitácora
+  // Esta función ha sido eliminada porque solo el administrador puede hacerlo
 
+  // Enviar mensaje al administrador (esto SÍ se mantiene)
   const handleSendMessage = async (message: string) => {
     if (!godchild) return;
     try {
@@ -147,7 +146,6 @@ export default function ApprovedGodparentView() {
     <main className="min-h-screen bg-gray-50 font-['Poppins']">
       <Navbar />
 
-      {/* ✅ CORRECCIÓN: Agregado pt-28 para dar espacio al navbar fixed */}
       <div className="max-w-7xl mx-auto px-6 py-8 pt-28">
         {/* Mensajes de éxito/error */}
         {successMessage && (
@@ -234,7 +232,7 @@ export default function ApprovedGodparentView() {
             child={godchild.nino}
             logEntries={logEntries}
             chatMessages={chatMessages}
-            onAddLogEntry={handleAddLogEntry}
+            // ❌ REMOVIDO: onAddLogEntry={handleAddLogEntry}
             onSendMessage={handleSendMessage}
             isLoading={loading}
           />

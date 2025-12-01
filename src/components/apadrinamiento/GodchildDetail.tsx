@@ -1,6 +1,12 @@
 /**
  * GodchildDetail - Detalle completo del niño apadrinado
+ * 
+ * CORRECCIÓN v2.0: Removida la funcionalidad de agregar entradas a la bitácora.
+ * El padrino solo puede VER la información, bitácora y chatear.
+ * Solo el administrador puede agregar entradas a la bitácora.
+ * 
  * @author Fundación Huahuacuna
+ * @version 2.0 - Solo lectura de bitácora
  */
 
 "use client";
@@ -15,14 +21,15 @@ interface ChatMessage {
   id: number;
   contenido: string;
   fecha: string;
-  enviado_por: "PADRINO" | "ADMINISTRADOR";
+  enviado_por?: "PADRINO" | "ADMINISTRADOR";
+  enviadoPor?: "PADRINO" | "ADMINISTRADOR";
 }
 
 interface GodchildDetailProps {
   child: INinoResponse;
   logEntries: IBitacoraEntrada[];
   chatMessages: ChatMessage[];
-  onAddLogEntry?: (titulo: string, contenido: string) => Promise<void>;
+  // ❌ REMOVIDO: onAddLogEntry - El padrino NO debe poder agregar entradas
   onSendMessage?: (message: string) => Promise<void>;
   isLoading?: boolean;
 }
@@ -31,7 +38,6 @@ export default function GodchildDetail({
   child,
   logEntries,
   chatMessages,
-  onAddLogEntry,
   onSendMessage,
   isLoading = false,
 }: GodchildDetailProps) {
@@ -51,6 +57,9 @@ export default function GodchildDetail({
     return age;
   };
 
+  // Nombre completo del niño para el PDF
+  const childFullName = `${child.nombre} ${child.apellido}`;
+
   return (
     <div className="space-y-6">
       {/* Card de info principal */}
@@ -59,7 +68,7 @@ export default function GodchildDetail({
           {child.fotoUrl ? (
             <img
               src={child.fotoUrl}
-              alt={`${child.nombre} ${child.apellido}`}
+              alt={childFullName}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -73,7 +82,7 @@ export default function GodchildDetail({
         <div className="relative px-6 py-8 -mt-16">
           <div className="bg-white rounded-2xl p-6 mb-6 shadow-lg">
             <h1 className="text-4xl font-bold text-[#1E3A5F] mb-4">
-              {child.nombre} {child.apellido}
+              {childFullName}
             </h1>
 
             {/* Información básica en grid */}
@@ -89,7 +98,7 @@ export default function GodchildDetail({
               <div className="text-center p-3 bg-blue-50 rounded-xl">
                 <Users className="w-5 h-5 text-blue-600 mx-auto mb-1" />
                 <p className="text-sm font-bold text-gray-900">
-                  {child.genero}
+                  {child.genero || "No especificado"}
                 </p>
                 <p className="text-xs text-gray-600">Género</p>
               </div>
@@ -138,20 +147,21 @@ export default function GodchildDetail({
       <div className="flex gap-2 border-b-2 border-gray-200 overflow-x-auto">
         {(
           [
-            { id: "info", label: "Información" },
-            { id: "log", label: "Bitácora" },
-            { id: "chat", label: "Chat" },
+            { id: "info", label: "Información", icon: "📋" },
+            { id: "log", label: "Bitácora", icon: "📖" },
+            { id: "chat", label: "Chat", icon: "💬" },
           ] as const
         ).map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-6 py-3 font-semibold transition-all whitespace-nowrap ${
+            className={`px-6 py-3 font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === tab.id
                 ? "text-pink-600 border-b-2 border-pink-600"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
+            <span>{tab.icon}</span>
             {tab.label}
           </button>
         ))}
@@ -169,9 +179,7 @@ export default function GodchildDetail({
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <span className="font-semibold text-gray-700">Nombre:</span>
-                  <span className="text-gray-900">
-                    {child.nombre} {child.apellido}
-                  </span>
+                  <span className="text-gray-900">{childFullName}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -183,7 +191,7 @@ export default function GodchildDetail({
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <span className="font-semibold text-gray-700">Género:</span>
-                  <span className="text-gray-900">{child.genero}</span>
+                  <span className="text-gray-900">{child.genero || "No especificado"}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -229,8 +237,9 @@ export default function GodchildDetail({
         {activeTab === "log" && (
           <GodchildLog
             entries={logEntries}
-            onAddEntry={onAddLogEntry}
+            childName={childFullName}
             isLoading={isLoading}
+            // ❌ REMOVIDO: onAddEntry - El padrino solo puede ver la bitácora
           />
         )}
 
