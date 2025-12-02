@@ -1,0 +1,115 @@
+// src/types/auth.ts
+
+/*
+  src/types/auth.ts
+
+  Contiene las interfaces TypeScript usadas para describir los datos
+  que intercambia el frontend con el backend en los flujos de autenticación.
+
+  Por qué es útil:
+  - Sirve como documentación dentro del código sobre la forma de los objetos.
+  - Ayuda al compilador a detectar errores tempranos cuando los campos cambian.
+
+  Mantener alineado con el backend: cuando el backend cambie las respuestas,
+  actualizar estos tipos para mantener el contrato sincronizado.
+  
+  @version 2.0 - Actualizado con propiedades completas del usuario
+*/
+
+export interface ILoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface IRegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  role: string;
+  phone: string;
+}
+
+/**
+ * Información del usuario autenticado (ACTUALIZADO V2)
+ */
+export interface IUserInfo {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  // ✅ Nuevas propiedades agregadas
+  userId?: number;
+  telefono?: string;
+  createdAt?: string;
+  isActive?: boolean;
+}
+
+export interface ILoginResponse {
+  success: boolean;
+  message: string;
+  token: string;
+  user: IUserInfo;
+}
+
+export interface IRegisterResponse {
+  success: boolean;
+  message: string;
+  user: IUserInfo;
+}
+
+export interface IErrorResponse {
+  status: number;
+  error: string;
+  message: string;
+  timestamp: string;
+  path: string;
+}
+
+// ========================================
+// Interfaces para recuperación de contraseña
+// ========================================
+
+export interface IForgotPasswordRequest {
+  email: string;
+}
+
+export interface IForgotPasswordResponse {
+  success: boolean;
+  message: string;
+  token?: string; // Token temporal (solo en desarrollo)
+  note?: string;
+}
+
+export interface IResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface IResetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface IVerifyTokenResponse {
+  success: boolean;
+  valid: boolean;
+  email?: string;
+  message?: string;
+}
+
+// ========================================
+// ✅ NUEVA: Datos del usuario en localStorage
+// ========================================
+
+/**
+ * Datos del usuario guardados en localStorage
+ */
+export interface IStoredUserData {
+  userId: number;
+  email: string;
+  fullName: string;
+  role: string;
+  telefono?: string;
+  createdAt?: string;
+  isActive?: boolean;
+}
