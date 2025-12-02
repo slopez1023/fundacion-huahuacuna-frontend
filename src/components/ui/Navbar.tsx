@@ -131,7 +131,7 @@ export default function Navbar() {
             ? 'border-gray-200/60 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-lg bg-white' 
             : 'border-gray-200/40 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur-md bg-white/95'
         }`}>
-          <div className={`bg-gradient-to-r from-white via-yellow-50 to-yellow-300/80 px-6 rounded-[30px] transition-all duration-300 ${
+          <div className={`bg-linear-to-r from-white via-yellow-50 to-yellow-300/80 px-6 rounded-[30px] transition-all duration-300 ${
             scrolled ? 'py-2.5' : 'py-3'
           }`}>
             <div className="flex items-center justify-between gap-4">
@@ -266,7 +266,7 @@ export default function Navbar() {
                         className="flex items-center gap-2 px-3 py-2 rounded-full bg-white hover:bg-gray-50 transition-all shadow-sm border border-gray-200"
                       >
                         {/* Avatar con iniciales */}
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E3A5F] to-[#2C5F7F] flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                        <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#1E3A5F] to-[#2C5F7F] flex items-center justify-center text-white text-xs font-bold shadow-inner">
                           {getInitials(user.name)}
                         </div>
 
@@ -295,11 +295,11 @@ export default function Navbar() {
 
                       {/* Dropdown Menu - Solo renderizar si está abierto */}
                       {isDropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[100] animate-fadeIn">
+                        <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-100 animate-fadeIn">
                           {/* Header del dropdown con info del usuario */}
                           <div className="px-4 py-3 border-b border-gray-100">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E3A5F] to-[#2C5F7F] flex items-center justify-center text-white text-sm font-bold shadow-inner">
+                              <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#1E3A5F] to-[#2C5F7F] flex items-center justify-center text-white text-sm font-bold shadow-inner">
                                 {getInitials(user.name)}
                               </div>
                               <div className="flex-1 min-w-0">

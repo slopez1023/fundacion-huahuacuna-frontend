@@ -22,6 +22,8 @@ export default function DonacionesPage() {
     phone: '',
     amount: '',
     paymentMethod: 'online',
+    documentType: 'CC',
+    documentNumber: '',
   });
 
   const [inKindForm, setInKindForm] = useState({
@@ -37,6 +39,54 @@ export default function DonacionesPage() {
     setIsLoading(true);
 
     try {
+      // Si el método de pago es "online", redirigir a PayU
+      if (monetaryForm.paymentMethod === 'online') {
+        // Preparar datos para PayU
+        const payuResponse = await fetch('/api/payu/process', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fullName: monetaryForm.fullName,
+            email: monetaryForm.email,
+            phone: monetaryForm.phone,
+            documentType: monetaryForm.documentType || 'CC',
+            documentNumber: monetaryForm.documentNumber || '0000000000',
+            amount: parseFloat(monetaryForm.amount),
+            description: `Donación ${monetaryForm.fullName}`,
+            currency: 'COP',
+          }),
+        });
+
+        const payuData = await payuResponse.json();
+
+        if (payuData.success) {
+          // Crear formulario y enviarlo a PayU
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = payuData.payuUrl;
+
+          // Agregar todos los campos del formulario
+          Object.entries(payuData.formData).forEach(([key, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = String(value);
+            form.appendChild(input);
+          });
+
+          document.body.appendChild(form);
+          form.submit();
+          return; // No continuar con el flujo normal
+        } else {
+          alert(payuData.error || 'Error al procesar el pago');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Para transferencia bancaria, usar el flujo normal
       const response = await fetch('/api/donations', {
         method: 'POST',
         headers: {
@@ -71,6 +121,8 @@ export default function DonacionesPage() {
           phone: '',
           amount: '',
           paymentMethod: 'online',
+          documentType: 'CC',
+          documentNumber: '',
         });
       } else {
         alert(data.error || 'Error al procesar la donación');
@@ -149,7 +201,7 @@ export default function DonacionesPage() {
         <div className="flex-1 max-w-4xl mx-auto px-6 py-16 w-full">
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
             {/* Header con gradiente */}
-            <div className="bg-gradient-to-r from-[#1E3A5F] via-[#2C5F7F] to-[#1E3A5F] p-8 text-center">
+            <div className="bg-linear-to-r from-[#1E3A5F] via-[#2C5F7F] to-[#1E3A5F] p-8 text-center">
               <div className="mb-4">
                 <div className="w-24 h-24 bg-[#FDD835] rounded-full flex items-center justify-center mx-auto">
                   <svg className="w-12 h-12 text-[#1E3A5F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,7 +228,7 @@ export default function DonacionesPage() {
                 </p>
 
                 {donationDetails?.type === 'monetary' && (
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6 mb-6">
+                  <div className="bg-linear-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6 mb-6">
                     <p className="text-sm text-gray-600 mb-2">Monto donado</p>
                     <p className="text-4xl font-bold text-green-600">
                       ${parseFloat(donationDetails.amount).toLocaleString('es-CO')} COP
@@ -185,7 +237,7 @@ export default function DonacionesPage() {
                 )}
 
                 {donationDetails?.type === 'in-kind' && (
-                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-6 mb-6">
+                  <div className="bg-linear-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-6 mb-6">
                     <p className="text-sm text-gray-600 mb-2">Tipo de donación</p>
                     <p className="text-2xl font-bold text-purple-600 capitalize">
                       {donationDetails.itemType}
@@ -195,7 +247,7 @@ export default function DonacionesPage() {
 
                 <div className="bg-yellow-50 border-l-4 border-[#FDD835] p-6 rounded-lg mb-6">
                   <div className="flex items-start gap-3">
-                    <svg className="w-6 h-6 text-[#FDD835] flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-6 h-6 text-[#FDD835] shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <div className="text-left">
@@ -211,9 +263,9 @@ export default function DonacionesPage() {
                 </div>
 
                 {/* Información del certificado */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
+                <div className="bg-linear-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
                   <div className="flex items-start gap-3">
-                    <svg className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-6 h-6 text-blue-600 shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div className="text-left">
@@ -274,7 +326,7 @@ export default function DonacionesPage() {
                   Hacer otra donación
                 </button>
                 <button
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => window.location.href = '/donaciones'}
                   className="px-8 py-3 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all"
                 >
                   Volver al inicio
@@ -423,6 +475,46 @@ export default function DonacionesPage() {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent text-gray-900 disabled:bg-gray-100"
                       />
                     </div>
+
+                    {/* Campos de documento solo para pago en línea */}
+                    {monetaryForm.paymentMethod === 'online' && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Tipo de documento <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              required
+                              disabled={isLoading}
+                              value={monetaryForm.documentType}
+                              onChange={(e) => setMonetaryForm({...monetaryForm, documentType: e.target.value})}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent text-gray-900 disabled:bg-gray-100"
+                            >
+                              <option value="CC">Cédula de Ciudadanía</option>
+                              <option value="CE">Cédula de Extranjería</option>
+                              <option value="NIT">NIT</option>
+                              <option value="TI">Tarjeta de Identidad</option>
+                              <option value="PP">Pasaporte</option>
+                            </select>
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Número de documento <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              disabled={isLoading}
+                              value={monetaryForm.documentNumber}
+                              onChange={(e) => setMonetaryForm({...monetaryForm, documentNumber: e.target.value})}
+                              placeholder="1234567890"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDD835] focus:border-transparent text-gray-900 disabled:bg-gray-100"
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -677,7 +769,7 @@ export default function DonacionesPage() {
                   
                   <div className="mt-5 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex gap-2">
-                      <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div>
@@ -694,7 +786,7 @@ export default function DonacionesPage() {
                 </div>
 
                 {/* Card: Seguridad */}
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6">
+                <div className="bg-linear-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                       <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -708,19 +800,19 @@ export default function DonacionesPage() {
                   
                   <ul className="space-y-3">
                     <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-green-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       <span className="text-sm text-gray-700">Transacciones encriptadas y seguras</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-green-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       <span className="text-sm text-gray-700">Certificado de donación por email</span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-green-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       <span className="text-sm text-gray-700">Transparencia en el uso de fondos</span>
@@ -756,7 +848,7 @@ export default function DonacionesPage() {
                 </div>
 
                 {/* Card: Artículos que aceptamos */}
-                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-6">
+                <div className="bg-linear-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                       <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -770,7 +862,7 @@ export default function DonacionesPage() {
                   
                   <ul className="space-y-3">
                     <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div>
@@ -779,7 +871,7 @@ export default function DonacionesPage() {
                       </div>
                     </li>
                     <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div>
@@ -788,16 +880,16 @@ export default function DonacionesPage() {
                       </div>
                     </li>
                     <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div>
-                        <span className="text-sm font-semibold text-gray-900 block">Útiles escolares y libros</span>
+                        <span className="text-sm font-semibold text-gray-900 block">Ütiles escolares y libros</span>
                         <span className="text-xs text-gray-600">Nuevos o en excelente estado</span>
                       </div>
                     </li>
                     <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div>
@@ -806,7 +898,7 @@ export default function DonacionesPage() {
                       </div>
                     </li>
                     <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div>
@@ -832,19 +924,19 @@ export default function DonacionesPage() {
                   
                   <ol className="space-y-3">
                     <li className="flex gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-[#FDD835] rounded-full flex items-center justify-center text-xs font-bold text-[#1E3A5F]">
+                      <span className="shrink-0 w-6 h-6 bg-[#FDD835] rounded-full flex items-center justify-center text-xs font-bold text-[#1E3A5F]">
                         1
                       </span>
                       <span className="text-sm text-gray-700">Completa el formulario con los detalles</span>
                     </li>
                     <li className="flex gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-[#FDD835] rounded-full flex items-center justify-center text-xs font-bold text-[#1E3A5F]">
+                      <span className="shrink-0 w-6 h-6 bg-[#FDD835] rounded-full flex items-center justify-center text-xs font-bold text-[#1E3A5F]">
                         2
                       </span>
                       <span className="text-sm text-gray-700">Nuestro equipo te contactará en 24-48 horas</span>
                     </li>
                     <li className="flex gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-[#FDD835] rounded-full flex items-center justify-center text-xs font-bold text-[#1E3A5F]">
+                      <span className="shrink-0 w-6 h-6 bg-[#FDD835] rounded-full flex items-center justify-center text-xs font-bold text-[#1E3A5F]">
                         3
                       </span>
                       <span className="text-sm text-gray-700">Coordinaremos la recolección o entrega</span>
