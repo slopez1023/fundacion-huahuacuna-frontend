@@ -72,7 +72,7 @@ export default function DashboardPage() {
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#FDD835] rounded-full filter blur-3xl"></div>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 py-20 lg:py-28">
+        <div className="relative max-w-7xl mx-auto px-6 py-20 lg:py-2">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Hero left - Contenido */}
             <div className="space-y-8 z-10">
@@ -97,7 +97,7 @@ export default function DashboardPage() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <Link 
                   href="/apadrinar" 
-                  className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[#FDD835] text-[#1E3A5F] font-bold shadow-xl hover:bg-[#FBC02D] hover:shadow-2xl hover:scale-105 transition-all duration-300"
+                  className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[#FDD835] text-[#1E3A5F] font-bold shadow-2xl hover:bg-[#FBC02D] hover:shadow-[0_20px_50px_rgba(253,216,53,0.5)] hover:scale-105 transition-all duration-300 ring-4 ring-[#FDD835]/30"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -109,7 +109,7 @@ export default function DashboardPage() {
                 </Link>
                 <Link 
                   href="/donaciones" 
-                  className="inline-flex items-center gap-2 px-8 py-4 rounded-full border-2 border-white/30 text-white font-semibold hover:bg-white/10 hover:border-white/50 backdrop-blur-sm transition-all duration-300"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-full border-2 border-white text-white font-semibold bg-white/20 hover:bg-white hover:text-[#1E3A5F] backdrop-blur-md shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -118,42 +118,6 @@ export default function DashboardPage() {
                 </Link>
               </div>
 
-              {/* Estadísticas inline */}
-              <div className="flex flex-wrap gap-8 pt-6 border-t border-white/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#FDD835]/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[#FDD835]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">20+</p>
-                    <p className="text-sm text-white/70">Años de experiencia</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#FDD835]/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[#FDD835]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">500+</p>
-                    <p className="text-sm text-white/70">Niños beneficiados</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#FDD835]/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-[#FDD835]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">80+</p>
-                    <p className="text-sm text-white/70">Padrinos activos</p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Hero right - Imagen mejorada */}
@@ -179,14 +143,14 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Badge flotante */}
-                <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl p-6 shadow-2xl max-w-xs">
+                <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl p-6 shadow-2xl max-w-sm">
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-full bg-[#FDD835] flex items-center justify-center flex-shrink-0">
-                      <Image src="/logo.png" alt="logo" width={40} height={40} className="rounded-full" />
+                    <div className="w-20 h-20 rounded-full bg-[#FDD835] flex items-center justify-center flex-shrink-0 ring-4 ring-[#FDD835]/20">
+                      <Image src="/logo.png" alt="logo" width={64} height={64} className="rounded-full" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-[#1E3A5F] mb-1">Fundación Huahuacuna</p>
-                      <p className="text-xs text-gray-600 leading-relaxed">Comprometidos con el bienestar integral de la niñez vulnerable</p>
+                      <p className="text-base font-bold text-[#1E3A5F] mb-1">Fundación Huahuacuna</p>
+                      <p className="text-sm text-gray-600 leading-relaxed">Comprometidos con el bienestar integral de la niñez vulnerable</p>
                     </div>
                   </div>
                 </div>

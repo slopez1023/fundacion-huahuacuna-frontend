@@ -147,9 +147,9 @@ export default function GodchildDetail({
       <div className="flex gap-2 border-b-2 border-gray-200 overflow-x-auto">
         {(
           [
-            { id: "info", label: "Información", icon: "📋" },
-            { id: "log", label: "Bitácora", icon: "📖" },
-            { id: "chat", label: "Chat", icon: "💬" },
+            { id: "info", label: "Información", icon: "" },
+            { id: "log", label: "Bitácora", icon: "" },
+            { id: "chat", label: "Chat", icon: "" },
           ] as const
         ).map((tab) => (
           <button

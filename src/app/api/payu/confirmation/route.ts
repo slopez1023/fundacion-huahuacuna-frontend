@@ -78,24 +78,33 @@ export async function POST(request: NextRequest) {
     // ========================================================================
     
     const config = getPayUConfig();
-    const isValidSignature = validateResponseSignature(
-      payuResponse as PayUResponse,
-      config.apiKey
-    );
-
-    if (!isValidSignature) {
-      logError('Firma inválida en confirmación de PayU', {
-        received: payuResponse.sign,
-        referenceCode: payuResponse.reference_sale,
-      });
-      
-      return NextResponse.json(
-        { error: 'Firma inválida' },
-        { status: 403 }
+    
+    // ⚠️ En modo prueba, permitir firmas de simulación
+    const isSimulation = payuResponse.sign === 'test_signature_for_development';
+    const skipValidation = config.testMode && isSimulation;
+    
+    if (!skipValidation) {
+      const isValidSignature = validateResponseSignature(
+        payuResponse as PayUResponse,
+        config.apiKey
       );
-    }
 
-    logTransaction('Firma validada correctamente');
+      if (!isValidSignature) {
+        logError('Firma inválida en confirmación de PayU', {
+          received: payuResponse.sign,
+          referenceCode: payuResponse.reference_sale,
+        });
+        
+        return NextResponse.json(
+          { error: 'Firma inválida' },
+          { status: 403 }
+        );
+      }
+
+      logTransaction('Firma validada correctamente');
+    } else {
+      logTransaction('⚠️ Modo simulación - Firma omitida (solo desarrollo)');
+    }
 
     // ========================================================================
     // PASO 4: Obtener información del estado
@@ -140,21 +149,67 @@ export async function POST(request: NextRequest) {
           email: payuResponse.email_buyer,
         });
         
-        // Ejemplo: Enviar email de confirmación
-        // await sendPaymentConfirmationEmail({
-        //   email: payuResponse.email_buyer!,
-        //   referenceCode: payuResponse.reference_sale!,
-        //   amount: payuResponse.value!,
-        //   transactionId: payuResponse.transaction_id!,
-        // });
-        
-        // Ejemplo: Crear donación en el sistema
-        // await saveDonation({
-        //   referenceCode: payuResponse.reference_sale!,
-        //   amount: parseFloat(payuResponse.value!),
-        //   email: payuResponse.email_buyer!,
-        //   status: 'completed',
-        // });
+        // Registrar la donación en el backend para crear notificación
+        try {
+          // Extraer información del extra1 (formato: "nombre|telefono")
+          const extra1Parts = payuResponse.extra1?.split('|') || ['Donante PayU', ''];
+          const donorName = extra1Parts[0] || 'Donante PayU';
+          const donorPhone = extra1Parts[1] || '';
+          
+          logTransaction('🔍 Datos extraídos de PayU', {
+            donorName,
+            donorPhone,
+            email: payuResponse.email_buyer,
+            amount: payuResponse.value,
+            extra1: payuResponse.extra1,
+          });
+          
+          const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+          
+          // Crear objeto de donación según el formato del backend (DonationRequest)
+          const donationPayload = {
+            fullName: donorName,  // ✅ El backend espera 'fullName'
+            email: payuResponse.email_buyer,
+            phone: donorPhone,
+            amount: parseFloat(payuResponse.value || '0'),
+            donationType: 'MONETARY',  // ✅ Backend espera 'MONETARY'
+            paymentMethod: 'ONLINE_PAYU',  // Método de pago PayU
+            description: `Pago en línea - Ref: ${payuResponse.reference_sale}`,
+          };
+
+          logTransaction('📤 Enviando donación al backend', donationPayload);
+          
+          const backendResponse = await fetch(`${backendUrl}/donations`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(donationPayload),
+          });
+
+          logTransaction('📥 Respuesta del backend', {
+            status: backendResponse.status,
+            statusText: backendResponse.statusText,
+            ok: backendResponse.ok,
+          });
+
+          if (!backendResponse.ok) {
+            const errorText = await backendResponse.text();
+            logError('❌ Error del backend al registrar donación de PayU', {
+              status: backendResponse.status,
+              error: errorText,
+            });
+          } else {
+            const responseData = await backendResponse.json();
+            logTransaction('✅ Donación de PayU registrada exitosamente', {
+              donationId: responseData.id,
+              donorName: responseData.donorName,
+            });
+            logTransaction('🔔 Notificación creada para el administrador');
+          }
+        } catch (backendError) {
+          logError('❌ Excepción al registrar donación de PayU', backendError);
+        }
         
         break;
 

@@ -264,8 +264,9 @@ export function preparePayUFormData(
     responseUrl: config.responseUrl,
     confirmationUrl: config.confirmationUrl,
     // Extras opcionales para pasar información adicional
-    extra1: paymentData.buyer.documentType,
-    extra2: paymentData.buyer.documentNumber,
+    // Usamos extra1 para pasar nombre y teléfono separados por | para recuperarlos en la confirmación
+    extra1: `${paymentData.buyer.fullName}|${paymentData.buyer.phone}`,
+    extra2: `${paymentData.buyer.documentType}|${paymentData.buyer.documentNumber}`,
   };
 }
 

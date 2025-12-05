@@ -67,10 +67,10 @@ export default function AvailableChildrenList({
         {children.map((child) => (
           <div
             key={child.id}
-            className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-pink-300"
+            className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-green-300"
           >
             {/* Foto del niño */}
-            <div className="relative h-48 bg-gradient-to-br from-pink-400 to-pink-600 overflow-hidden">
+            <div className="relative h-48 bg-gradient-to-br from-green-400 to-green-600 overflow-hidden">
               {child.fotoUrl ? (
                 <img
                   src={child.fotoUrl}
@@ -94,7 +94,7 @@ export default function AvailableChildrenList({
               {/* Información básica */}
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2 text-gray-700">
-                  <Calendar className="w-4 h-4 text-pink-500" />
+                  <Calendar className="w-4 h-4 text-green-500" />
                   <span className="text-sm">
                     {child.edad} años • {child.genero}
                   </span>
@@ -123,7 +123,7 @@ export default function AvailableChildrenList({
               {/* Botón */}
               <button
                 onClick={() => handleSelectClick(child)}
-                className="w-full bg-gradient-to-r from-pink-500 to-pink-600 text-white py-3 rounded-xl font-bold hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-bold hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2"
               >
                 <Heart className="w-5 h-5" />
                 Apadrinar a {child.nombre}

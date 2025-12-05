@@ -374,7 +374,7 @@ export default function DonacionesPage() {
     <div className="min-h-screen bg-gray-50 font-['Poppins'] flex flex-col">
       <Navbar />
       
-      <div className="flex-1 max-w-6xl mx-auto px-6 py-12 w-full">
+      <div className="flex-1 max-w-6xl mx-auto px-6 pt-36 pb-12 w-full">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-[#1E3A5F] mb-4">
@@ -759,7 +759,7 @@ export default function DonacionesPage() {
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-gray-200">
                       <span className="text-sm font-semibold text-gray-700">Número de cuenta:</span>
-                      <span className="text-sm text-gray-900 font-mono font-bold">555-5000-47-55</span>
+                      <span className="text-sm text-gray-900 font-mono font-bold">865-0000-41-98</span>
                     </div>
                     <div className="flex justify-between items-center py-3">
                       <span className="text-sm font-semibold text-gray-700">Titular:</span>
